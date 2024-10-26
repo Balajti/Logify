@@ -5,6 +5,14 @@ import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
 
+
+export async function generateMetadata({ params }: { params: { title: string } }) {
+  return {
+    title: `${params.title} | Logify`,
+    description: 'Project Management and Time Tracking',
+  };
+}
+
 export default async function RootLayout({
   children,
 }: {
@@ -13,8 +21,8 @@ export default async function RootLayout({
   const session = await getServerSession();
 
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
         <ClientProviders session={session}>
           {children}
         </ClientProviders>

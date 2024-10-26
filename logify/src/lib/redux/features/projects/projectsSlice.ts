@@ -74,7 +74,71 @@ interface ProjectsState {
 }
 
 const initialState: ProjectsState = {
-  items: [],
+  items: [
+    {
+      id: '1',
+      name: 'Website Redesign',
+      description: 'Redesign the company website with modern UI/UX',
+      status: 'in-progress',
+      priority: 'high',
+      startDate: '2024-10-01',
+      endDate: '2024-11-30',
+      dueDate: 'Nov 30',
+      progress: 75,
+      team: [
+        { id: '1', name: 'John Doe', role: 'Lead Designer' },
+        { id: '2', name: 'Jane Smith', role: 'Developer' },
+      ],
+      tasks: { total: 20, completed: 15 },
+    },
+    {
+      id: '2',
+      name: 'Mobile App Development',
+      description: 'Develop a new mobile app for customers',
+      status: 'in-progress',
+      priority: 'high',
+      startDate: '2024-09-15',
+      endDate: '2024-12-15',
+      dueDate: 'Dec 15',
+      progress: 45,
+      team: [
+        { id: '3', name: 'Mike Johnson', role: 'Mobile Developer' },
+        { id: '4', name: 'Sarah Williams', role: 'UX Designer' },
+      ],
+      tasks: { total: 30, completed: 12 },
+    },
+    {
+      id: '3',
+      name: 'API Integration',
+      description: 'Integrate third-party APIs',
+      status: 'not-started',
+      priority: 'medium',
+      startDate: '2024-10-15',
+      endDate: '2024-11-25',
+      dueDate: 'Nov 25',
+      progress: 0,
+      team: [
+        { id: '5', name: 'Alex Brown', role: 'Backend Developer' },
+      ],
+      tasks: { total: 15, completed: 0 },
+    },
+    {
+      id: '4',
+      name: 'Data Analytics Dashboard',
+      description: 'Create a comprehensive analytics dashboard',
+      status: 'completed',
+      priority: 'low',
+      startDate: '2024-08-01',
+      endDate: '2024-09-30',
+      dueDate: 'Sep 30',
+      progress: 100,
+      team: [
+        { id: '6', name: 'Emily Chen', role: 'Data Scientist' },
+        { id: '7', name: 'Tom Wilson', role: 'Frontend Developer' },
+      ],
+      tasks: { total: 25, completed: 25 },
+    }
+  ],
   status: 'idle',
   error: null,
   filters: {
