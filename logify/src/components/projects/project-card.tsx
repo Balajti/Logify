@@ -6,9 +6,10 @@ import type { Project } from "@/lib/redux/features/projects/projectsSlice";
 
 interface ProjectCardProps {
   project: Project;
+  isAdmin?: boolean;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-gray-100 text-gray-800',

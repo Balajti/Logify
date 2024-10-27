@@ -1,15 +1,19 @@
 'use client';
 
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useState } from 'react';
+import { useAuthorization } from '@/hooks/use-authorization';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
 import { Button } from '@/components/ui/button';
 import { ProjectCard } from '@/components/projects/project-card';
 import { ProjectFilters } from '@/components/projects/project-filters';
+import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { Plus } from 'lucide-react';
-import Link from 'next/link';
+import { useAppSelector } from '@/lib/redux/hooks';
 
 export default function ProjectsPage() {
-  const { items: projects, status, filters } = useAppSelector((state) => state.projects);
+  const { isAdmin } = useAuthorization();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const { items: projects, filters } = useAppSelector((state) => state.projects);
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch = project.name.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -25,20 +29,31 @@ export default function ProjectsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Projects</h1>
-          <Link href="/projects/create">
-            <Button>
+          {isAdmin && (
+            <Button onClick={() => setShowCreateDialog(true)}>
               <Plus className="mr-2 h-4 w-4" /> New Project
             </Button>
-          </Link>
+          )}
         </div>
 
         <ProjectFilters />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard 
+              key={project.id} 
+              project={project}
+              isAdmin={isAdmin}
+            />
           ))}
         </div>
+
+        {isAdmin && (
+          <CreateProjectDialog
+            open={showCreateDialog}
+            onClose={() => setShowCreateDialog(false)}
+          />
+        )}
       </div>
     </DashboardWrapper>
   );

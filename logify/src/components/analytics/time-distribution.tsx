@@ -5,25 +5,22 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const data = [
-  { name: 'Development', value: 45 },
-  { name: 'Meetings', value: 20 },
-  { name: 'Planning', value: 15 },
-  { name: 'Research', value: 20 },
+  { name: 'Development', value: 45, color: '#0088FE' },
+  { name: 'Meetings', value: 20, color: '#00C49F' },
+  { name: 'Planning', value: 15, color: '#FFBB28' },
+  { name: 'Research', value: 20, color: '#FF8042' },
 ];
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
-
 export function TimeDistribution() {
+  const [mounted, setMounted] = useState(false);
 
-    const [mounted, setMounted] = useState(false);
-  
-    useEffect(() => {
-      setMounted(true);
-    }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!mounted) {
     return (
-      <Card className="w-full">
+      <Card>
         <CardHeader>
           <CardTitle>Time Distribution</CardTitle>
         </CardHeader>
@@ -36,8 +33,20 @@ export function TimeDistribution() {
     );
   }
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-4 shadow-lg rounded-lg border">
+          <p className="font-medium">{payload[0].name}</p>
+          <p className="text-gray-600">{`${payload[0].value}%`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
         <CardTitle>Time Distribution</CardTitle>
       </CardHeader>
@@ -49,18 +58,27 @@ export function TimeDistribution() {
                 data={data}
                 cx="50%"
                 cy="50%"
-                labelLine={false}
+                innerRadius={60}
                 outerRadius={100}
-                fill="#8884d8"
+                paddingAngle={5}
                 dataKey="value"
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={entry.color}
+                    stroke="white"
+                    strokeWidth={2}
+                  />
                 ))}
               </Pie>
-              <Tooltip />
-              <Legend />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend 
+                verticalAlign="bottom" 
+                height={36}
+                formatter={(value) => <span className="text-sm">{value}</span>}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

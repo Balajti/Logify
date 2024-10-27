@@ -6,36 +6,44 @@ import {
   ArrowDownRight, 
   Clock, 
   CheckSquare, 
-  AlertTriangle 
+  AlertTriangle,
+  Users 
 } from 'lucide-react';
 
 export function ProjectMetrics() {
   const metrics = [
     {
       title: 'Total Hours Logged',
-      value: '1,234',
+      value: '164.2',
       change: '+12.3%',
       isPositive: true,
       icon: Clock,
     },
     {
       title: 'Tasks Completed',
-      value: '156',
+      value: '48',
       change: '+8.2%',
       isPositive: true,
       icon: CheckSquare,
     },
     {
+      title: 'Active Projects',
+      value: '12',
+      change: '+15.1%',
+      isPositive: true,
+      icon: Users,
+    },
+    {
       title: 'Overdue Tasks',
-      value: '23',
+      value: '3',
       change: '-5.1%',
-      isPositive: false,
+      isPositive: true,
       icon: AlertTriangle,
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (
@@ -48,9 +56,9 @@ export function ProjectMetrics() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{metric.value}</div>
-              <p className={`text-xs ${
+              <p className={`text-xs flex items-center ${
                 metric.isPositive ? 'text-green-600' : 'text-red-600'
-              } flex items-center`}>
+              }`}>
                 {metric.isPositive ? (
                   <ArrowUpRight className="h-4 w-4 mr-1" />
                 ) : (

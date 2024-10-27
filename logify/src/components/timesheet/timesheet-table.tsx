@@ -20,35 +20,47 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
+import { SubmitTimesheetDialog } from './submit-timesheet-dialog';
 
 interface TimeEntry {
   id: string;
   project: string;
   task: string;
-  hours: { [key: string]: string }; // { "2024-01-01": "8" }
+  hours: { [key: string]: string };
   total: number;
 }
 
 interface TimesheetTableProps {
   startDate: Date;
+  employeeId?: string;
+  isAdminView?: boolean;
 }
 
-export function TimesheetTable({ startDate }: TimesheetTableProps) {
+
+const projectTasks: { [key: string]: string[] } = {
+  'website-redesign': ['UI Development', 'Backend Integration', 'Testing'],
+  'mobile-app': ['App Development', 'API Integration', 'QA'],
+  'api-integration': ['API Design', 'Implementation', 'Documentation'],
+};
+
+export function TimesheetTable({ 
+  startDate, 
+  employeeId, 
+  isAdminView = false 
+}: TimesheetTableProps) {
   const [entries, setEntries] = useState<TimeEntry[]>([
     {
       id: '1',
-      project: 'Website Redesign',
+      project: 'website-redesign',
       task: 'UI Development',
       hours: {
         [format(startDate, 'yyyy-MM-dd')]: '8',
         [format(addDays(startDate, 1), 'yyyy-MM-dd')]: '7',
-        // Add more days...
       },
       total: 15,
     },
-    // Add more entries...
   ]);
-
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
   const addNewEntry = () => {
@@ -64,6 +76,30 @@ export function TimesheetTable({ startDate }: TimesheetTableProps) {
 
   const removeEntry = (id: string) => {
     setEntries(entries.filter(entry => entry.id !== id));
+  };
+
+  const updateEntry = (id: string, field: string, value: string) => {
+    setEntries(entries.map(entry => {
+      if (entry.id === id) {
+        if (field === 'project') {
+          return { ...entry, project: value, task: '' };
+        }
+        return { ...entry, [field]: value };
+      }
+      return entry;
+    }));
+  };
+
+  const updateHours = (id: string, date: string, value: string) => {
+    setEntries(entries.map(entry => {
+      if (entry.id === id) {
+        const newHours = { ...entry.hours, [date]: value };
+        const total = Object.values(newHours)
+          .reduce((sum, val) => sum + (parseFloat(val) || 0), 0);
+        return { ...entry, hours: newHours, total };
+      }
+      return entry;
+    }));
   };
 
   return (
@@ -89,7 +125,10 @@ export function TimesheetTable({ startDate }: TimesheetTableProps) {
           {entries.map(entry => (
             <TableRow key={entry.id}>
               <TableCell>
-                <Select value={entry.project}>
+                <Select
+                  value={entry.project}
+                  onValueChange={(value) => updateEntry(entry.id, 'project', value)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
@@ -101,24 +140,35 @@ export function TimesheetTable({ startDate }: TimesheetTableProps) {
                 </Select>
               </TableCell>
               <TableCell>
-                <Select value={entry.task}>
+                <Select
+                  value={entry.task}
+                  onValueChange={(value) => updateEntry(entry.id, 'task', value)}
+                  disabled={!entry.project}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select task" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="development">Development</SelectItem>
-                    <SelectItem value="design">Design</SelectItem>
-                    <SelectItem value="testing">Testing</SelectItem>
+                    {entry.project && projectTasks[entry.project].map(task => (
+                      <SelectItem key={task} value={task}>{task}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </TableCell>
               {weekDays.map(day => (
                 <TableCell key={day.toString()} className="text-center">
                   <Input
-                    type="text"
+                    type="number"
+                    min="0"
+                    max="24"
+                    step="0.5"
                     className="w-16 text-center mx-auto"
                     value={entry.hours[format(day, 'yyyy-MM-dd')] || ''}
-                    placeholder="0"
+                    onChange={(e) => updateHours(
+                      entry.id,
+                      format(day, 'yyyy-MM-dd'),
+                      e.target.value
+                    )}
                   />
                 </TableCell>
               ))}
@@ -138,9 +188,22 @@ export function TimesheetTable({ startDate }: TimesheetTableProps) {
           ))}
         </TableBody>
       </Table>
-      <Button onClick={addNewEntry} className="gap-2">
-        <Plus className="h-4 w-4" /> Add Entry
-      </Button>
+      <div className="flex justify-between">
+        <Button onClick={addNewEntry} className="gap-2">
+          <Plus className="h-4 w-4" /> Add Entry
+        </Button>
+        <Button onClick={() => setShowSubmitDialog(true)}>
+          Submit Timesheet
+        </Button>
+      </div>
+      <SubmitTimesheetDialog
+        open={showSubmitDialog}
+        onClose={() => setShowSubmitDialog(false)}
+        onSubmit={() => {
+          console.log('Submitting timesheet:', entries);
+          setShowSubmitDialog(false);
+        }}
+      />
     </div>
   );
 }

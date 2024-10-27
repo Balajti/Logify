@@ -1,4 +1,3 @@
-// src/components/projects/project-filters.tsx
 'use client';
 
 import { Input } from "@/components/ui/input";
