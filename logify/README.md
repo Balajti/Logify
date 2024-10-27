@@ -1,47 +1,169 @@
-Employee Time Tracking
+# Logify - Employee Time Tracking & Project Management
 
-Manual and Automated Tracking: Employees can log time spent on tasks manually, or use a timer to track time spent on specific activities.
+![Logify Dashboard](./main.png)
 
-Activity Log: Detailed logs showing time entries, breaks, and overtime calculations.
+Logify is a modern, intuitive time tracking and project management solution built with Next.js and TypeScript. It helps teams streamline their workflow by combining time tracking, project management, and team collaboration into one seamless platform.
 
-Task Completion Tags: Each log entry can have tags or labels such as “In Progress,” “Completed,” or “Needs Review” to indicate the task status.
+## Features
 
-Project Management
+### 🎯 Core Features
+- **Role-based Access Control**
+  - Admin dashboard with comprehensive management capabilities
+  - Employee view with restricted permissions
+  - Customizable access levels
 
-Project Creation & Assignment: Managers can create projects with specific goals, timelines, and assign them to individuals or teams.
+- **Project Management**
+  - Project creation and tracking
+  - Progress monitoring
+  - Team assignment
+  - Priority and status management
 
-Task Assignment and Prioritization: Managers can assign tasks with priority levels (High, Medium, Low) and define deadlines.
+- **Time Tracking**
+  - Automated timesheet generation
+  - Weekly and monthly views
+  - Time distribution analytics
+  - Task-based time logging
 
-Task Dependencies: Set dependencies so that certain tasks must be completed before others can begin, providing a clearer workflow for complex projects.
+- **Team Collaboration**
+  - Real-time activity feed
+  - Task assignments
+  - Project updates
+  - Team member status tracking
 
-Automated Timesheet Generation
+- **Analytics & Reporting**
+  - Time distribution visualization
+  - Project progress tracking
+  - Performance metrics
+  - Customizable dashboards
 
-Weekly and Monthly Reports: Generate timesheets that show time spent on different tasks and projects, with automated overtime and leave deductions.
+### 💫 User Experience
+- Responsive design for all devices
+- Dark/Light mode support
+- Smooth animations and transitions
+- Interactive data visualizations
 
-Editable and Approveable Timesheets: Employees can submit timesheets for manager approval, and managers can make adjustments as necessary.
+## Technology Stack
 
-Timesheet Analytics: Display breakdowns for each employee’s time allocation across different projects, including billable and non-billable hours.
+### Frontend
+- Next.js 14 (App Router)
+- TypeScript
+- Redux (with Redux Toolkit)
+- Framer Motion
+- Tailwind CSS
+- shadcn/ui Components
+- Chart.js / Recharts
 
-Analytics and Insights Dashboard
+### Backend (Planned)
+- Node.js
+- Express.js
 
-Individual Productivity Reports: View metrics such as tasks completed, time efficiency, and most productive hours.
+## Screenshots
 
-Project Performance Analysis: Analyze time spent vs. time estimated, deadline adherence, and budget utilization.
+### Dashboard
+![Dashboard View](./dashboard_screenshot.png)
+- Overview of key metrics
+- Time distribution charts
+- Recent activity feed
+- Project progress tracking
 
-Real-time Monitoring: Track ongoing tasks, flagged delays, and employee performance on active projects in real time.
+### Projects
+![Projects View](./projects.png)
+- Project cards with status indicators
+- Progress bars
+- Team assignment visualization
+- Priority markers
 
-Employee Roles and Permissions
+### Authentication
+![Authentication](./login.png)
+- Clean, modern login interface
+- Role-based access
+- Secure authentication flow
 
-Role-based Access Control: Define roles such as Employee, Manager, Admin, and customize their access based on hierarchy and department.
+## Getting Started
 
-Privacy Controls: Employees can view only their own tasks, managers can view tasks assigned to their teams, and administrators have full access.
+### Prerequisites
+```bash
+Node.js 18+ (LTS recommended)
+npm or yarn or pnpm
+```
 
-Task Collaboration & Communication
+### Installation
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/logify.git
+```
 
-Comments & Feedback: Users can leave comments on tasks and projects to provide status updates or seek clarification.
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+# or 
+pnpm install
+```
 
-Performance Review Integration
+3. Set up environment variables
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+```
 
-End-of-Project Feedback: Managers can give feedback on an employee’s performance for specific projects.
+4. Run the development server
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
 
-KPI Tracking: Customizable Key Performance Indicators (KPIs) to assess employee progress and productivity.
+### Demo Credentials
+```
+Admin:
+- Email: demo@logify.com
+- Password: demo123
+
+Employee:
+- Email: employee@logify.com
+- Password: demo123
+```
+
+## Project Structure
+```
+src/
+├── app/                 # Next.js app router pages
+├── components/          # Reusable components
+├── lib/                 # Utilities and configurations
+│   ├── redux/          # Redux store and slices
+│   └── types/          # TypeScript types
+├── styles/             # Global styles
+└── providers/          # Context providers
+```
+
+## Color Scheme
+- Main Background: `#F5F7F8`
+- Primary Color: `#FABB18`
+- Text Color: `#45474B`
+- Accent Colors: `#525B6B`, `#92A5A3`
+
+## Features by Role
+
+### Admin
+- Full project management capabilities
+- Team member management
+- Access to all timesheets
+- Analytics and reporting
+- System configuration
+
+### Employee
+- View assigned projects
+- Create and manage tasks
+- Submit personal timesheets
+- View team members
+- Access basic analytics
+
+## Contributing
+Currently, this is a personal project and not open for contributions.
+
+## License
+This project is private and not licensed for public use.
