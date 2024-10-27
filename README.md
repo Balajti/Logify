@@ -1,6 +1,6 @@
 # Logify - Employee Time Tracking & Project Management
 
-![Logify Dashboard](./main.png)
+![Logify Dashboard](./pictures_for_readme/main.png)
 
 Logify is a modern, intuitive time tracking and project management solution built with Next.js and TypeScript. It helps teams streamline their workflow by combining time tracking, project management, and team collaboration into one seamless platform.
 
@@ -60,21 +60,21 @@ Logify is a modern, intuitive time tracking and project management solution buil
 ## Screenshots
 
 ### Dashboard
-![Dashboard View](./dashboard_screenshot.png)
+![Dashboard View](./pictures_for_readme/dashboard.png)
 - Overview of key metrics
 - Time distribution charts
 - Recent activity feed
 - Project progress tracking
 
 ### Projects
-![Projects View](./projects.png)
+![Projects View](./pictures_for_readme/projects.png)
 - Project cards with status indicators
 - Progress bars
 - Team assignment visualization
 - Priority markers
 
 ### Authentication
-![Authentication](./login.png)
+![Authentication](./pictures_for_readme/login.png)
 - Clean, modern login interface
 - Role-based access
 - Secure authentication flow
