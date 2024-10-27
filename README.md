@@ -131,13 +131,14 @@ Employee:
 ## Project Structure
 ```
 src/
-├── app/                 # Next.js app router pages
-├── components/          # Reusable components
-├── lib/                 # Utilities and configurations
+├── app/                # Next.js app router pages
+├── components/         # Reusable components
+|    └── providers/          # Context providers
+├── hooks/              
+├── lib/                # Utilities and configurations
 │   ├── redux/          # Redux store and slices
 │   └── types/          # TypeScript types
 ├── styles/             # Global styles
-└── providers/          # Context providers
 ```
 
 ## Color Scheme
