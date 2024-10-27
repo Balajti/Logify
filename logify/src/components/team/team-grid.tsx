@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Mail, Phone, MoreVertical } from 'lucide-react';
+import { useAppSelector } from '@/lib/redux/hooks';
 
 interface TeamMember {
   id: string;
@@ -30,30 +31,22 @@ interface TeamMember {
 }
 
 export function TeamGrid() {
-  // Mock data - in a real app, this would come from Redux/API
-  const [members] = useState<TeamMember[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      role: 'Lead Developer',
-      department: 'Engineering',
-      email: 'john@example.com',
-      phone: '+1 234 567 890',
-      status: 'active',
-      projects: 5,
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      role: 'UX Designer',
-      department: 'Design',
-      email: 'jane@example.com',
-      phone: '+1 234 567 891',
-      status: 'away',
-      projects: 3,
-    },
-    // Add more team members...
-  ]);
+  const { members, filters } = useAppSelector((state) => state.team);
+  
+  const filteredMembers = members.filter((member) => {
+    const matchesSearch = 
+      member.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      member.role.toLowerCase().includes(filters.search.toLowerCase()) ||
+      member.email.toLowerCase().includes(filters.search.toLowerCase());
+    
+    const matchesDepartment = filters.department.length === 0 || 
+      filters.department.includes(member.department.toLowerCase());
+    
+    const matchesStatus = filters.status.length === 0 || 
+      filters.status.includes(member.status);
+    
+    return matchesSearch && matchesDepartment && matchesStatus;
+  });
 
   const getStatusColor = (status: TeamMember['status']) => {
     const colors = {
@@ -66,7 +59,7 @@ export function TeamGrid() {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {members.map((member) => (
+      {filteredMembers.map((member) => (
         <Card key={member.id} className="hover:shadow-lg transition-shadow">
           <CardHeader className="p-6">
             <div className="flex items-start justify-between">

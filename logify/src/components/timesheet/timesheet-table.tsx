@@ -192,18 +192,16 @@ export function TimesheetTable({
         <Button onClick={addNewEntry} className="gap-2">
           <Plus className="h-4 w-4" /> Add Entry
         </Button>
-        <Button onClick={() => setShowSubmitDialog(true)}>
-          Submit Timesheet
-        </Button>
+        <SubmitTimesheetDialog
+          open={showSubmitDialog}
+          onClose={() => setShowSubmitDialog(false)}
+          onSubmit={() => {
+            console.log('Submitting timesheet:', entries);
+            setShowSubmitDialog(false);
+          }}
+        />
       </div>
-      <SubmitTimesheetDialog
-        open={showSubmitDialog}
-        onClose={() => setShowSubmitDialog(false)}
-        onSubmit={() => {
-          console.log('Submitting timesheet:', entries);
-          setShowSubmitDialog(false);
-        }}
-      />
+      
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { deleteTask, toggleTaskComplete, updateTask, type Task } from '@/lib/redux/features/tasks/tasksSlice';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,79 +15,37 @@ import {
 import { Card } from '@/components/ui/card';
 import { MoreVertical, Clock } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: 'todo' | 'in-progress' | 'completed';
-  priority: 'low' | 'medium' | 'high';
-  assignee: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  dueDate: string;
-  project: string;
-  isCompleted: boolean;
-}
+import { useState } from 'react';
 
 export function TaskList() {
-  const [tasks, setTasks] = useState<Task[]>([
-    {
-      id: '1',
-      title: 'Design user interface',
-      description: 'Create wireframes and mockups for the new dashboard',
-      status: 'in-progress',
-      priority: 'high',
-      assignee: {
-        id: '1',
-        name: 'John Doe',
-      },
-      dueDate: '2024-11-01',
-      project: 'Website Redesign',
-      isCompleted: false,
-    },
-    {
-      id: '2',
-      title: 'Make the website responsive',
-      description: 'Make the website responsive for mobile and tablet devices',
-      status: 'completed',
-      priority: 'medium',
-      assignee: {
-        id: '2',
-        name: 'Jane Smith',
-      },
-      dueDate: '2024-12-01',
-      project: 'Website Redesign',
-      isCompleted: true,
-    },
-    {
-      id: '3',
-      title: 'Create wireframes and mockups',
-      description: 'Create wireframes and mockups for the new dashboard',
-      status: 'todo',
-      priority: 'high',
-      assignee: {
-        id: '1',
-        name: 'John Doe',
-      },
-      dueDate: '2024-11-01',
-      project: 'Mobile App Development',
-      isCompleted: false,
-    },
-  ]);
 
+  const handleTaskDelete = (taskId: string) => {
+    dispatch(deleteTask(taskId));
+  };
+
+  const dispatch = useAppDispatch();
+  const { items: tasks, filters } = useAppSelector((state) => state.tasks);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
+  const filteredTasks = tasks.filter((task) => {
+    const matchesSearch = (
+      task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+      task.description.toLowerCase().includes(filters.search.toLowerCase())
+    );
+    
+    const matchesStatus = filters.status.length === 0 || filters.status.includes(task.status);
+    const matchesPriority = filters.priority.length === 0 || filters.priority.includes(task.priority);
+    const matchesProject = filters.project.length === 0 || filters.project.includes(task.project);
+    
+    return matchesSearch && matchesStatus && matchesPriority && matchesProject;
+  });
+
   const handleTaskComplete = (taskId: string, completed: boolean) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, isCompleted: completed } : task
-    ));
+    dispatch(toggleTaskComplete(taskId));
   };
 
   const handleTaskEdit = (task: Task) => {
-    setTasks(tasks.map(t => t.id === task.id ? task : t));
+    dispatch(updateTask(task));
     setEditingTask(null);
   };
 
@@ -102,7 +61,7 @@ export function TaskList() {
   return (
     <>
       <div className="space-y-4">
-        {tasks.map((task) => (
+        {filteredTasks.map((task) => (
           <Card key={task.id} className="p-4">
             <div className="flex items-center space-x-4">
               <Checkbox 
@@ -143,7 +102,10 @@ export function TaskList() {
                   <DropdownMenuItem onClick={() => setEditingTask(task)}>
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem 
+                    onClick={() => handleTaskDelete(task.id)}
+                    className="text-red-600"
+                  >
                     Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -153,12 +115,14 @@ export function TaskList() {
         ))}
       </div>
 
-      <EditTaskDialog
-        task={editingTask}
-        open={!!editingTask}
-        onClose={() => setEditingTask(null)}
-        onSave={handleTaskEdit}
-      />
+      {editingTask && (
+        <EditTaskDialog
+          task={editingTask}
+          open={!!editingTask}
+          onClose={() => setEditingTask(null)}
+          onSave={handleTaskEdit}
+        />
+      )}
     </>
   );
 }
