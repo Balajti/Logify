@@ -47,7 +47,34 @@ export function TaskList() {
       project: 'Website Redesign',
       isCompleted: false,
     },
-    // Add more mock tasks
+    {
+      id: '2',
+      title: 'Make the website responsive',
+      description: 'Make the website responsive for mobile and tablet devices',
+      status: 'completed',
+      priority: 'medium',
+      assignee: {
+        id: '2',
+        name: 'Jane Smith',
+      },
+      dueDate: '2024-12-01',
+      project: 'Website Redesign',
+      isCompleted: true,
+    },
+    {
+      id: '3',
+      title: 'Create wireframes and mockups',
+      description: 'Create wireframes and mockups for the new dashboard',
+      status: 'todo',
+      priority: 'high',
+      assignee: {
+        id: '1',
+        name: 'John Doe',
+      },
+      dueDate: '2024-11-01',
+      project: 'Mobile App Development',
+      isCompleted: false,
+    },
   ]);
 
   const [editingTask, setEditingTask] = useState<Task | null>(null);

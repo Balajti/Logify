@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { ConfirmLogoutDialog } from '@/components/dialog/confirm-logout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
@@ -19,10 +20,11 @@ export default function Topbar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   return (
-    <header className="h-16 border-b bg-white">
+    <header className="h-16 border-b bg-background">
       <div className="flex h-full items-center justify-between px-6">
         <div className="text-xl font-bold">Logify</div>
         <div className="flex items-center gap-4">
+          {/* <ThemeToggle /> */}
           <NotificationsDropdown />
           
           <DropdownMenu>

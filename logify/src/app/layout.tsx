@@ -1,17 +1,10 @@
 import { Inter } from 'next/font/google';
 import { getServerSession } from 'next-auth/next';
 import { ClientProviders } from '@/components/providers/client-providers';
+import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
-
-
-export async function generateMetadata({ params }: { params: { title: string } }) {
-  return {
-    title: `${params.title} | Logify`,
-    description: 'Project Management and Time Tracking',
-  };
-}
 
 export default async function RootLayout({
   children,
@@ -23,9 +16,11 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <ClientProviders session={session}>
-          {children}
-        </ClientProviders>
+        <ThemeProvider>
+          <ClientProviders session={session}>
+            {children}
+          </ClientProviders>
+        </ThemeProvider>
       </body>
     </html>
   );

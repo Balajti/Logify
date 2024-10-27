@@ -126,6 +126,11 @@ export default function LoginPage() {
               <span className="font-semibold">demo@logify.com</span> /{' '}
               <span className="font-semibold">demo123</span>
             </div>
+            <div className="text-sm text-center text-gray-600">
+              For demo, use:{' '}
+              <span className="font-semibold">employee@logify.com</span> /{' '}
+              <span className="font-semibold">demo123</span>
+            </div>
           </div>
 
           <div className="mt-6">
