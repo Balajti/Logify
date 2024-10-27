@@ -10,6 +10,7 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
+  console.log(isAdmin);
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-gray-100 text-gray-800',

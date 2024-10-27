@@ -33,6 +33,7 @@ export function TimeDistribution() {
     );
   }
 
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       return (

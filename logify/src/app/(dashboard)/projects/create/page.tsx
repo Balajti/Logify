@@ -76,6 +76,7 @@ export default function CreateProjectPage() {
       }));
       router.push('/projects');
     } catch (error) {
+      console.error(error);
       setError('Failed to create project');
     }
   }

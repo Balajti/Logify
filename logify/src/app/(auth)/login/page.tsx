@@ -57,7 +57,8 @@ export default function LoginPage() {
       router.push(callbackUrl);
       router.refresh();
     } catch (error) {
-      setError('An error occurred during login');
+      console.error(error);
+      setError('An error occurred during login ');
     } finally {
       setIsLoading(false);
     }
