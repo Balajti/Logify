@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TimesheetTable } from './timesheet-table';
-import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { startOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -32,7 +32,6 @@ export function AdminTimesheetView() {
   };
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  //const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
   return (
     <div className="space-y-6">

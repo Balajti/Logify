@@ -42,6 +42,7 @@ export function TaskList() {
 
   const handleTaskComplete = (taskId: string, completed: boolean) => {
     dispatch(toggleTaskComplete(taskId));
+    console.log(`Task ${taskId} is ${completed ? 'completed' : 'incomplete'}`);
   };
 
   const handleTaskEdit = (task: Task) => {
