@@ -13,6 +13,8 @@ import {
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
+  console.log(theme);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

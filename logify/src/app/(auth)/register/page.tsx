@@ -44,6 +44,7 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     try {
+      console.log(values);
       setIsLoading(true);
       setError('');
       
@@ -52,6 +53,7 @@ export default function RegisterPage() {
       router.push('/login?registered=true');
       
     } catch (error) {
+      console.error(error);
       setError('An error occurred during registration');
     } finally {
       setIsLoading(false);

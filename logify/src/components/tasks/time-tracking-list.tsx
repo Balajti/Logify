@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, Clock } from 'lucide-react';
+import { Play, Clock } from 'lucide-react';
 
 interface TimeEntry {
   id: string;
@@ -20,6 +20,7 @@ interface TimeTrackingListProps {
 
 export function TimeTrackingList({ projectId }: TimeTrackingListProps) {
   // This would come from Redux in a real app
+  console.log(projectId);
   const timeEntries: TimeEntry[] = [
     {
       id: '1',

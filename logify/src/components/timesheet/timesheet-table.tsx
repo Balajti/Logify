@@ -48,6 +48,7 @@ export function TimesheetTable({
   employeeId, 
   isAdminView = false 
 }: TimesheetTableProps) {
+  console.log('TimesheetTable:', startDate, employeeId, isAdminView);
   const [entries, setEntries] = useState<TimeEntry[]>([
     {
       id: '1',

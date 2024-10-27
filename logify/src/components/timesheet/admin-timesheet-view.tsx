@@ -32,7 +32,7 @@ export function AdminTimesheetView() {
   };
 
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+  //const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
   return (
     <div className="space-y-6">

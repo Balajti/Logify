@@ -5,6 +5,7 @@ import { ReduxProvider } from '@/lib/redux/provider';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
+  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
   session: any;
 }
 

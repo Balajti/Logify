@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { NotificationsDropdown } from '@/components/notifications/notifications-dropdown';
-import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { ConfirmLogoutDialog } from '@/components/dialog/confirm-logout';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
