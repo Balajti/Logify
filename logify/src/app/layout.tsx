@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next';
 import { ClientProviders } from '@/components/providers/client-providers';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
+import { authOptions } from '@/lib/auth';
+import { headers } from 'next/headers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -11,7 +13,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession();
+  const headersList = headers();
+  console.log('Headers:', headersList);
+  const session = await getServerSession(authOptions);
+  console.log('Session:', session);
 
   return (
     <html lang="en" suppressHydrationWarning>

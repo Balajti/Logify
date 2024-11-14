@@ -9,13 +9,13 @@ interface ExtendedUser extends User {
 
 const users: ExtendedUser[] = [
   {
-    id: "1",
+    id: 1,
     name: "Admin User",
     email: "demo@logify.com",
     role: "admin",
   },
   {
-    id: "2",
+    id: 2,
     name: "Demo Employee",
     email: "employee@logify.com",
     role: "employee",
@@ -30,25 +30,43 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-
-        if (
-          (credentials.email === "demo@logify.com" && credentials.password === "demo123") ||
-          (credentials.email === "employee@logify.com" && credentials.password === "demo123")
-        ) {
-          return users.find(user => user.email === credentials.email) || null;
+      async authorize(credentials): Promise<User | null> {
+        console.log('Auth attempt:', {
+          email: credentials?.email,
+          passwordProvided: !!credentials?.password
+        });
+        
+        if (!credentials?.email || !credentials?.password) {
+          console.log('Missing credentials');
+          return null;
         }
-
+      
+        const validCombinations = [
+          { email: "demo@logify.com", password: "demo123" },
+          { email: "employee@logify.com", password: "demo123" }
+        ];
+      
+        const isValid = validCombinations.some(
+          combo => combo.email === credentials.email && combo.password === credentials.password
+        );
+      
+        console.log('Auth result:', { isValid });
+      
+        if (isValid) {
+          const user = users.find(user => user.email === credentials.email);
+          console.log('Found user:', user);
+          return user ?? null;
+        }
+      
         return null;
-      },
+      }
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as ExtendedUser).role;
-        token.id = user.id;
+        token.id = Number(user.id);
       }
       return token;
     },
@@ -62,5 +80,10 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
+    error: '/login',
   },
-};
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+}satisfies NextAuthOptions;
