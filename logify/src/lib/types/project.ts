@@ -1,5 +1,7 @@
+import { Task } from "./task";
+
 export interface Project {
-    id: string;
+    id: number;
     name: string;
     description: string;
     status: 'not-started' | 'in-progress' | 'on-hold' | 'completed';
@@ -8,13 +10,10 @@ export interface Project {
     endDate: string;
     progress: number;
     team: {
-      id: string;
+      id: number;
       name: string;
       role: string;
       avatar?: string;
     }[];
-    tasks: {
-      total: number;
-      completed: number;
-    };
+    tasks: Task;
   }

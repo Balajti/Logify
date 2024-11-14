@@ -1,5 +1,5 @@
 export interface Project {
-    id: string;
+    id: number;
     name: string;
     progress: number;
     status: 'on-track' | 'at-risk' | 'delayed';
@@ -7,7 +7,7 @@ export interface Project {
   }
   
   export interface Activity {
-    id: string;
+    id: number;
     type: 'task' | 'project' | 'timesheet';
     description: string;
     timestamp: string;
