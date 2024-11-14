@@ -1,4 +1,4 @@
-import { Task } from "./task";
+import { Task, Tasks } from "./task";
 
 export interface Project {
     id: number;
@@ -16,4 +16,5 @@ export interface Project {
       avatar?: string;
     }[];
     tasks: Task;
+    task: Tasks[];
   }

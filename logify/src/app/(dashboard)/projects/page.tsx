@@ -39,13 +39,13 @@ export default function ProjectsPage() {
         <ProjectFilters />
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
-            <ProjectCard 
-              key={project.id} 
+            {filteredProjects.map((project) => (
+              <ProjectCard 
+              key={project.id}
               project={project}
               isAdmin={isAdmin}
-            />
-          ))}
+              />
+            ))}
         </div>
 
         {isAdmin && (

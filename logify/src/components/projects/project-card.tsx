@@ -3,6 +3,7 @@ import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/lib/redux/features/projects/projectsSlice";
+import { useRouter } from "next/navigation";
 
 interface ProjectCardProps {
   project: Project;
@@ -30,8 +31,14 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
     return colors[priority];
   };
 
+  const router = useRouter();
+
+  const handleProjectClick = (projectId: number) => {
+    router.push(`/projects/${projectId}`);
+  };
+
   return (
-    <Card className="hover:shadow-lg transition-shadow">
+    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleProjectClick(project.id)} >
       <CardHeader className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg">{project.name}</h3>

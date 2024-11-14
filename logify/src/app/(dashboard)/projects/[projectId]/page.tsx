@@ -9,18 +9,29 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, CalendarDays, Users, CheckSquare } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Tasks } from '@/lib/types/task';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   
   const project = useAppSelector(state =>
-    state.projects.items.find(p => p.id === projectId)
+    state.projects.items.find(p => p.id === Number(projectId))
   );
 
   if (!project) {
     return <div>Project not found</div>;
   }
+
+  const getPriorityColor = (priority: Tasks['priority']) => {
+    const colors = {
+      low: 'bg-gray-100 text-gray-800',
+      medium: 'bg-yellow-100 text-yellow-800',
+      high: 'bg-red-100 text-red-800',
+    };
+    return colors[priority];
+  };
 
   return (
     <DashboardWrapper>
@@ -72,7 +83,6 @@ export default function ProjectDetailsPage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="team">Team</TabsTrigger>
-            <TabsTrigger value="files">Files</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -121,7 +131,32 @@ export default function ProjectDetailsPage() {
                   <h3 className="text-lg font-semibold">Tasks</h3>
                   <Button>Add Task</Button>
                 </div>
-                {/* Task list would go here */}
+                <div className="space-y-4">
+                  {project.task.map((task) => (
+                    <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center space-x-4 w-full justify-between">
+                        <div>
+                          <p className="font-medium">{task.title}</p>
+                          <p className="text-sm text-gray-500">{task.description}</p>
+                        </div>
+                        <div className='flex items-center space-x-4 flex-row'>
+                          <p className='font-medium'>Priority: </p>
+                          <Badge className={getPriorityColor(task.priority)}>
+                            {task.priority}
+                          </Badge>
+                        </div>
+                        <div className='flex items-center space-x-4 flex-row'>
+                          <p className='font-medium'>Status: </p>
+                          <p className="text-sm text-gray-500">{task.status}</p>
+                        </div>
+                        <div className='flex items-center space-x-4 flex-row'>
+                          <p className='font-medium'>Due date: </p>
+                          <p className="text-sm text-gray-500">{task.dueDate}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -149,18 +184,6 @@ export default function ProjectDetailsPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="files">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Files</h3>
-                  <Button>Upload File</Button>
-                </div>
-                {/* File list would go here */}
               </CardContent>
             </Card>
           </TabsContent>
