@@ -1,6 +1,4 @@
-// src/lib/redux/features/projects/projectsSlice.ts
 import { mockProjects } from '@/lib/data/mockData';
-import { Tasks } from '@/lib/types/task';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface Project {
