@@ -1,6 +1,8 @@
+import { mockTasks } from '@/lib/data/mockData';
+import { Tasks } from '@/lib/types/task';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export interface Task {
+/* export interface Task {
   id: string;
   title: string;
   description: string;
@@ -15,62 +17,19 @@ export interface Task {
   project: string;
   isCompleted: boolean;
 }
-
+ */
 interface TasksState {
-  items: Task[];
+  items: Tasks[];
   filters: {
     status: string[];
     priority: string[];
-    project: string[];
+    project: number[];
     search: string;
   };
 }
 
 const initialState: TasksState = {
-  items: [
-    {
-      id: '1',
-      title: 'Design user interface',
-      description: 'Create wireframes and mockups for the new dashboard',
-      status: 'in-progress',
-      priority: 'high',
-      assignee: {
-        id: '1',
-        name: 'John Doe',
-      },
-      dueDate: '2024-11-01',
-      project: 'Website Redesign',
-      isCompleted: false,
-    },
-    {
-        id: '2',
-        title: 'Make the website responsive',
-        description: 'Make the website responsive for mobile and tablet devices',
-        status: 'completed',
-        priority: 'medium',
-        assignee: {
-          id: '2',
-          name: 'Jane Smith',
-        },
-        dueDate: '2024-12-01',
-        project: 'Website Redesign',
-        isCompleted: true,
-      },
-      {
-        id: '3',
-        title: 'Create wireframes and mockups',
-        description: 'Create wireframes and mockups for the new dashboard',
-        status: 'todo',
-        priority: 'high',
-        assignee: {
-          id: '1',
-          name: 'John Doe',
-        },
-        dueDate: '2024-11-01',
-        project: 'Mobile App Development',
-        isCompleted: false,
-      },
-  ],
+  items: mockTasks,
   filters: {
     status: [],
     priority: [],
@@ -86,25 +45,25 @@ export const tasksSlice = createSlice({
     setTaskFilters: (state, action: PayloadAction<Partial<TasksState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
-    toggleTaskComplete: (state, action: PayloadAction<string>) => {
-      const task = state.items.find(t => t.id === action.payload);
+    toggleTaskComplete: (state, action: PayloadAction<number>) => {
+      const task = state.items.find(t => t.id === Number(action.payload));
       if (task) {
         task.isCompleted = !task.isCompleted;
       }
     },
-    updateTask: (state, action: PayloadAction<Task>) => {
+    updateTask: (state, action: PayloadAction<Tasks>) => {
       const index = state.items.findIndex(t => t.id === action.payload.id);
       if (index !== -1) {
         state.items[index] = action.payload;
       }
     },
-    deleteTask: (state, action: PayloadAction<string>) => {
-      state.items = state.items.filter(task => task.id !== action.payload);
+    deleteTask: (state, action: PayloadAction<number>) => {
+      state.items = state.items.filter(task => task.id !== Number(action.payload));
     },
-    addTask: (state, action: PayloadAction<Omit<Task, 'id'>>) => {
-      const newTask: Task = {
+    addTask: (state, action: PayloadAction<Omit<Tasks, 'id'>>) => {
+      const newTask: Tasks = {
         ...action.payload,
-        id: `task-${state.items.length + 1}`,
+        id: state.items.length + 1,
       };
       state.items.push(newTask);
     },

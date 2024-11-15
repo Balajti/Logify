@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { deleteTask, toggleTaskComplete, updateTask, type Task } from '@/lib/redux/features/tasks/tasksSlice';
+import { deleteTask, toggleTaskComplete, updateTask } from '@/lib/redux/features/tasks/tasksSlice';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,16 +16,18 @@ import { Card } from '@/components/ui/card';
 import { MoreVertical, Clock } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
 import { useState } from 'react';
+import { mockProjects, mockTeamMembers } from '@/lib/data/mockData';
+import { Tasks } from '@/lib/types/task';
 
 export function TaskList() {
 
-  const handleTaskDelete = (taskId: string) => {
+  const handleTaskDelete = (taskId: number) => {
     dispatch(deleteTask(taskId));
   };
 
   const dispatch = useAppDispatch();
   const { items: tasks, filters } = useAppSelector((state) => state.tasks);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editingTask, setEditingTask] = useState<Tasks | null>(null);
 
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch = (
@@ -35,22 +37,22 @@ export function TaskList() {
     
     const matchesStatus = filters.status.length === 0 || filters.status.includes(task.status);
     const matchesPriority = filters.priority.length === 0 || filters.priority.includes(task.priority);
-    const matchesProject = filters.project.length === 0 || filters.project.includes(task.project);
+    const matchesProject = filters.project.length === 0 || filters.project.includes(task.projectId);
     
     return matchesSearch && matchesStatus && matchesPriority && matchesProject;
   });
 
-  const handleTaskComplete = (taskId: string, completed: boolean) => {
+  const handleTaskComplete = (taskId: number, completed: boolean) => {
     dispatch(toggleTaskComplete(taskId));
     console.log(`Task ${taskId} is ${completed ? 'completed' : 'incomplete'}`);
   };
 
-  const handleTaskEdit = (task: Task) => {
+  const handleTaskEdit = (task: Tasks) => {
     dispatch(updateTask(task));
     setEditingTask(null);
   };
 
-  const getPriorityColor = (priority: Task['priority']) => {
+  const getPriorityColor = (priority: Tasks['priority']) => {
     const colors = {
       low: 'bg-gray-100 text-gray-800',
       medium: 'bg-yellow-100 text-yellow-800',
@@ -75,7 +77,7 @@ export function TaskList() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h4 className="text-sm font-medium leading-none">{task.title}</h4>
-                    <p className="text-sm text-gray-500">{task.project}</p>
+                    <p className="text-sm text-gray-500">{mockProjects[task.projectId - 1].name}</p>
                   </div>
                   <Badge className={getPriorityColor(task.priority)}>
                     {task.priority}
@@ -88,8 +90,8 @@ export function TaskList() {
                     <span>Due {task.dueDate}</span>
                   </div>
                   <Avatar className="h-6 w-6">
-                    <AvatarImage src={task.assignee.avatar} />
-                    <AvatarFallback>{task.assignee.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={mockTeamMembers[task.team[0] - 1].avatar} />
+                    <AvatarFallback>{mockTeamMembers[task.team[0] - 1].name.charAt(0)}</AvatarFallback>
                   </Avatar>
                 </div>
               </div>

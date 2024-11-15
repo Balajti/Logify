@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/lib/redux/features/projects/projectsSlice";
 import { useRouter } from "next/navigation";
+import { mockTeamMembers } from "@/lib/data/mockData";
 
 interface ProjectCardProps {
   project: Project;
@@ -19,7 +20,7 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
       'on-hold': 'bg-yellow-100 text-yellow-800',
       'completed': 'bg-green-100 text-green-800',
     };
-    return colors[status];
+    return colors[status as keyof typeof colors];
   };
 
   const getPriorityColor = (priority: Project['priority']) => {
@@ -65,17 +66,17 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
         <div className="space-y-2">
           <div className="text-sm text-gray-500">Team</div>
           <div className="flex -space-x-2">
-            {project.team.map((member) => (
-              <Avatar key={member.id} className="border-2 border-white">
-                <AvatarImage src={member.avatar} />
-                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+            {project.team.map((memberId) => (
+              <Avatar key={mockTeamMembers[memberId-1].id} className="border-2 border-white">
+                <AvatarImage src={mockTeamMembers[memberId-1].avatar} />
+                <AvatarFallback>{mockTeamMembers[memberId-1].name.charAt(0)}</AvatarFallback>
               </Avatar>
             ))}
           </div>
         </div>
 
         <div className="flex justify-between text-sm text-gray-500">
-          <span>Tasks: {project.tasks.completed}/{project.tasks.total}</span>
+          <span>Tasks: {project.task.completed}/{project.task.total}</span>
           <span>Due: {project.dueDate}</span>
         </div>
       </CardContent>

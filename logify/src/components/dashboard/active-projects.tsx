@@ -1,12 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { mockProjects } from "@/lib/data/mockData";
 import type { Project } from '@/lib/redux/features/projects/projectsSlice';
 
 interface ActiveProjectsProps {
-  projects: Array<Pick<Project, 'id' | 'name' | 'progress' | 'status'> & { dueDate: string }>;
+  projectIds: number[];
 }
 
-export function ActiveProjects({ projects }: ActiveProjectsProps) {
+export function ActiveProjects({ projectIds }: ActiveProjectsProps) {
+  const projects = projectIds.map((projectId) => {
+    const project = mockProjects.find((project) => project.id === projectId);
+    return {
+      ...project,
+    };
+  });
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-yellow-100 text-yellow-800',
@@ -14,8 +21,9 @@ export function ActiveProjects({ projects }: ActiveProjectsProps) {
       'on-hold': 'bg-gray-100 text-gray-800',
       'completed': 'bg-green-100 text-green-800',
     };
-    return colors[status] || colors['in-progress'];
+    return colors[status as keyof typeof colors] || colors['in-progress'];
   };
+  
 
   return (
     <Card className="col-span-2">
@@ -25,7 +33,7 @@ export function ActiveProjects({ projects }: ActiveProjectsProps) {
       <CardContent>
         <div className="space-y-6">
           {projects.map((project) => (
-            <div key={project.id} className="space-y-2">
+            <div key={`${project.id}-${project.dueDate}`} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">{project.name}</p>
@@ -35,7 +43,7 @@ export function ActiveProjects({ projects }: ActiveProjectsProps) {
                 </div>
                 <span
                   className={`text-xs px-2 py-1 rounded-full ${getStatusColor(
-                    project.status
+                    project.status || 'in-progress'
                   )}`}
                 >
                   {project.status}

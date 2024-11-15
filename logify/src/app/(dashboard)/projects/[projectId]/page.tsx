@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, CalendarDays, Users, CheckSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tasks } from '@/lib/types/task';
+import { mockTasks, mockTeamMembers } from '@/lib/data/mockData';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
@@ -58,7 +59,7 @@ export default function ProjectDetailsPage() {
             <CardContent className="p-6 flex flex-col items-center">
               <CheckSquare className="h-8 w-8 text-green-500 mb-2" />
               <p className="text-sm text-gray-500">Tasks</p>
-              <p className="text-2xl font-bold">{project.tasks.completed}/{project.tasks.total}</p>
+              <p className="text-2xl font-bold">{project.task.completed}/{project.task.total}</p>
             </CardContent>
           </Card>
           <Card>
@@ -132,26 +133,26 @@ export default function ProjectDetailsPage() {
                   <Button>Add Task</Button>
                 </div>
                 <div className="space-y-4">
-                  {project.task.map((task) => (
-                    <div key={task.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {project.tasks.map((taskId) => (
+                    <div key={mockTasks[taskId - 1].id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4 w-full justify-between">
                         <div>
-                          <p className="font-medium">{task.title}</p>
-                          <p className="text-sm text-gray-500">{task.description}</p>
+                          <p className="font-medium">{mockTasks[taskId - 1].title}</p>
+                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].description}</p>
                         </div>
                         <div className='flex items-center space-x-4 flex-row'>
                           <p className='font-medium'>Priority: </p>
-                          <Badge className={getPriorityColor(task.priority)}>
-                            {task.priority}
+                          <Badge className={getPriorityColor(mockTasks[taskId - 1].priority)}>
+                            {mockTasks[taskId - 1].priority}
                           </Badge>
                         </div>
                         <div className='flex items-center space-x-4 flex-row'>
                           <p className='font-medium'>Status: </p>
-                          <p className="text-sm text-gray-500">{task.status}</p>
+                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].status}</p>
                         </div>
                         <div className='flex items-center space-x-4 flex-row'>
                           <p className='font-medium'>Due date: </p>
-                          <p className="text-sm text-gray-500">{task.dueDate}</p>
+                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].dueDate}</p>
                         </div>
                       </div>
                     </div>
@@ -169,16 +170,16 @@ export default function ProjectDetailsPage() {
                   <Button>Add Member</Button>
                 </div>
                 <div className="space-y-4">
-                  {project.team.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {project.team.map((memberId) => (
+                    <div key={mockTeamMembers[memberId-1].id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center space-x-4">
                         <Avatar>
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                          <AvatarImage src={mockTeamMembers[memberId-1].avatar} />
+                          <AvatarFallback>{mockTeamMembers[memberId-1].name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{member.name}</p>
-                          <p className="text-sm text-gray-500">{member.role}</p>
+                          <p className="font-medium">{mockTeamMembers[memberId-1].name}</p>
+                          <p className="text-sm text-gray-500">{mockTeamMembers[memberId-1].role}</p>
                         </div>
                       </div>
                     </div>

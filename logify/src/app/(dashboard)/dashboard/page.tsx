@@ -52,7 +52,7 @@ export default function DashboardPage() {
         {/* Charts and Activity */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <TimeDistribution data={timeDistribution} />
-          <ActiveProjects projects={activeProjects} />
+          <ActiveProjects projectIds={activeProjects} />
           <RecentActivity activities={activities} />
         </div>
       </div>
