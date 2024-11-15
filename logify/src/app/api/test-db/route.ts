@@ -4,29 +4,19 @@ import { testTable } from '@/lib/db/schema';
 
 export async function GET() {
   try {
+    // Test database connection
     const result = await db.select().from(testTable);
     return NextResponse.json({ 
-      message: 'Data retrieved successfully',
-      data: result,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    console.error('Database GET error:', error);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
-  }
-}
-
-export async function POST() {
-  try {
-    const result = await db.insert(testTable).values({
-      name: `Test Entry ${new Date().toISOString()}`,
-    }).returning();
-    return NextResponse.json({ 
-      message: 'Data inserted successfully',
+      status: 'connected',
+      timestamp: new Date().toISOString(),
       data: result 
     });
   } catch (error) {
-    console.error('Database POST error:', error);
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    console.error('Database error:', error);
+    return NextResponse.json({ 
+      status: 'error',
+      message: 'Failed to connect to database',
+      timestamp: new Date().toISOString()
+    }, { status: 500 });
   }
 }
