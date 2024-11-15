@@ -13,10 +13,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const headersList = headers();
-  console.log('Headers:', headersList);
   const session = await getServerSession(authOptions);
-  console.log('Session:', session);
 
   return (
     <html lang="en" suppressHydrationWarning>
