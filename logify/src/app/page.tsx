@@ -36,7 +36,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl sm:text-6xl font-bold text-gray-900 mb-6">
-              Track Timeaaaa, Manage Projects,<br />Boost Productivity
+              Track Time, Manage Projects,<br />Boost Productivity
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               Streamline your workflow with our all-in-one time tracking and project management solution.
