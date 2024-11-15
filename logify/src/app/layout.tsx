@@ -4,7 +4,6 @@ import { ClientProviders } from '@/components/providers/client-providers';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
 import { authOptions } from '@/lib/auth';
-import { headers } from 'next/headers';
 
 const inter = Inter({ subsets: ['latin'] });
 
