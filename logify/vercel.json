@@ -1,0 +1,35 @@
+{
+    "git": {
+      "deploymentEnabled": {
+        "main": true,
+        "develop": true,
+        "feature/**": true
+      }
+    },
+    "github": {
+      "enabled": true,
+      "silent": true,
+      "autoAlias": true
+    },
+    "ignoreCommand": "git diff HEAD^ HEAD --quiet ./",
+    "environments": {
+      "production": {
+        "env": {
+          "ENVIRONMENT": "production",
+          "NEXTAUTH_URL": "https://logify-plum.vercel.app/"
+        }
+      },
+      "preview": {
+        "env": {
+          "ENVIRONMENT": "preview",
+          "NEXTAUTH_URL": "https://develop.logify-plum.vercel.app/"
+        }
+      },
+      "development": {
+        "env": {
+          "ENVIRONMENT": "development",
+          "NEXTAUTH_URL": "https://${VERCEL_URL}"
+        }
+      }
+    }
+  }
