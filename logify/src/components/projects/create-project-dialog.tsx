@@ -69,10 +69,11 @@ export function CreateProjectDialog({
         ...values,
         progress: 0,
         team: [],
-        tasks: {
+        task: {
             total: 0,
             completed: 0,
         },
+        tasks: [],
         dueDate: ""
     }));
     onClose();

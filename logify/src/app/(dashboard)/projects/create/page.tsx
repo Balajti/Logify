@@ -69,10 +69,11 @@ export default function CreateProjectPage() {
           dueDate: formattedDueDate,
           progress: 0,
           team: [],
-          tasks: {
+          task: {
               total: 0,
               completed: 0
-          }
+          },
+          tasks: [],
       }));
       router.push('/projects');
     } catch (error) {
