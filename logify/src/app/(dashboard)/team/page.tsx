@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
 import { TeamGrid } from '@/components/team/team-grid';
 import { TeamFilters } from '@/components/team/team-filters';
@@ -22,3 +24,17 @@ export default function TeamPage() {
     </DashboardWrapper>
   );
 }
+
+export const AddMemberButton: React.FC = () => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    navigate('/addmember/page.tsx');
+  };
+
+  return (
+    <Button onClick={handleClick}>
+      <UserPlus className="mr-2 h-4 w-4" /> Add Member
+    </Button>
+  );
+};

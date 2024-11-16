@@ -8,6 +8,9 @@ import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { TimeDistribution } from '@/components/dashboard/time-distribution';
 import { ActiveProjects } from '@/components/dashboard/active-projects';
 import { Clock, Users, Briefcase, CheckSquare } from 'lucide-react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ProjectsPage from '../projects/page';
 
 export default function DashboardPage() {
   const { stats, timeDistribution, activities, activeProjects } = useAppSelector(
@@ -53,6 +56,12 @@ export default function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
           <TimeDistribution data={timeDistribution} />
           <ActiveProjects projectIds={activeProjects} />
+          <Router>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/projects/active" element={<ProjectsPage />} />
+            </Routes>
+          </Router>
           <RecentActivity activities={activities} />
         </div>
       </div>
