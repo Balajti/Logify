@@ -28,10 +28,10 @@ export interface Project {
 
 export interface Activity {
   id: string;
-  type: string;
+  type: 'task' | 'project' | 'timesheet';
   description: string;
   timestamp: string;
-  user: { name: string };
+  user: { name: string, avatar?: string; };
 }
 
 export interface TimeDistributionData {
