@@ -1,4 +1,4 @@
-import { NextFetchEvent, NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 
 export async function extractBody(req: NextRequest){
     if(!req.body) {

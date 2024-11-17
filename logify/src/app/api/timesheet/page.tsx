@@ -2,9 +2,8 @@
 
 import { NextFetchEvent, NextRequest } from "next/server";
 import {Pool} from '@neondatabase/serverless'
-import zod, { string, number, z, date } from 'zod'
+import zod, { number, date } from 'zod'
 import sqlstring from 'sqlstring'
-import { start } from "repl";
 
 async function extractBody(req: NextRequest){
     if(!req.body) {
