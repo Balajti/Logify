@@ -19,6 +19,12 @@ export default function ProjectDetailsPage() {
   const project = useAppSelector(state =>
     state.projects.items.find(p => p.id === Number(projectId))
   );
+  
+  const tasks = useAppSelector(state => state.tasks.items);
+  const filteredTasks = tasks.filter(task => task.projectId === Number(projectId));
+
+  const teamMembers = useAppSelector(state => state.team.members);
+  const filteredTeamMembers = teamMembers.filter(member => member.projects.includes(Number(projectId)));
 
   if (!project) {
     return <div>Project not found</div>;
@@ -33,11 +39,6 @@ export default function ProjectDetailsPage() {
     return colors[priority];
   };
 
-  const tasks = useAppSelector(state => state.tasks.items);
-  const filteredTasks = tasks.filter(task => task.projectId === Number(projectId));
-
-  const teamMembers = useAppSelector(state => state.team.members);
-  const filteredTeamMembers = teamMembers.filter(member => member.projects.includes(Number(projectId)));
 
   return (
     <DashboardWrapper>
