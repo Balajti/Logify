@@ -2,49 +2,35 @@
 
 import { NextFetchEvent, NextRequest } from "next/server";
 import {Pool} from '@neondatabase/serverless'
-import zod, { string } from 'zod'
+import zod, { z, number, string } from 'zod'
 import sqlstring from 'sqlstring'
-
-async function extractBody(req: NextRequest){
-    if(!req.body) {
-        return 'upload unsuccesful';
-    }
-
-const decoder = new TextDecoder();
-
-const reader = req.body.getReader();
-
-let body =''
-
-while(true){
-    const {done, value} = await reader.read();
-
-    if(done){
-        try{
-        return JSON.parse(body);
-        }
-        catch(e){
-            console.error(e)
-            return null;
-        }
-    }
-
-    body = body + decoder.decode(value)
-}
-
-}
+import { extractBody } from "../utils/extractBody";
 
 const schema = zod.object({
-    handle: string().max(60).min(1),
+    id : number(),
+    name : string(),
+    role: string(),
+    department: string(),
+    email: string(),
+    phone: string(),
+    avatar: string(),
+    status: string(),
 });
 
 async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     
     const body = await extractBody(req);
 
-    const {handle} = schema.parse(body)
+    const {id} = schema.parse(body)
+    const {name} = schema.parse(body)
+    const {role} = schema.parse(body)
+    const {department} = schema.parse(body)
+    const {email} = schema.parse(body)
+    const {phone} = schema.parse(body)
+    const {avatar} = schema.parse(body)
+    const {status} = schema.parse(body)
 
-    console.log("body", body);
+    console.log("id", id);
     
     const pool = new Pool({
         connectionString: process.env.DATABASE_URL,
@@ -53,7 +39,7 @@ async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     const sql= sqlstring.format(`
     INSERT INTO team_members (id, name, role, department, email, phone, avatar, status) VALUES
     (?, ?, ?, ?, ?, ?, ?, ?);
-    `, [handle]);
+    `, [id, name, role, department, email, phone, avatar, status]);
 
     console.log("sql", sql);
 

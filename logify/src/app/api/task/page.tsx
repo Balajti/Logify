@@ -2,47 +2,31 @@
 
 import { NextFetchEvent, NextRequest } from "next/server";
 import {Pool} from '@neondatabase/serverless'
-import zod, { string } from 'zod'
+import zod , { z, number, string, date } from 'zod'
 import sqlstring from 'sqlstring'
-
-async function extractBody(req: NextRequest){
-    if(!req.body) {
-        return 'upload unsuccesful';
-    }
-
-const decoder = new TextDecoder();
-
-const reader = req.body.getReader();
-
-let body =''
-
-while(true){
-    const {done, value} = await reader.read();
-
-    if(done){
-        try{
-        return JSON.parse(body);
-        }
-        catch(e){
-            console.error(e)
-            return null;
-        }
-    }
-
-    body = body + decoder.decode(value)
-}
-
-}
+import { extractBody } from "../utils/extractBody";
 
 const schema = zod.object({
-    handle: string().max(60).min(1),
+    id: number().max(10).min(1),
+    title: string().max(100).min(1),
+    description: string().max(1000).min(1),
+    status: z.enum(["to-do", "in-progress", "completed"]),
+    priority: z.enum(["low", "medium", "high"]),
+    due_date : date(),
+    project_id: number().max(10).min(1),
 });
 
 async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     
     const body = await extractBody(req);
 
-    const {handle} = schema.parse(body)
+    const {id} = schema.parse(body)
+    const {title} = schema.parse(body)
+    const {description} = schema.parse(body)
+    const {status} = schema.parse(body)
+    const {priority} = schema.parse(body)
+    const {due_date} = schema.parse(body)
+    const {project_id} = schema.parse(body)
 
     console.log("body", body);
     
@@ -53,7 +37,7 @@ async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     const sql= sqlstring.format(`
     INSERT INTO tasks (id, title, description, status, priority, due_date, is_completed, project_id) VALUES
     (?, ?, ?, ?, ?, ?, ?, ?);
-    `, [handle]);
+    `, [id, title, description, status, priority, due_date, project_id]);
 
     console.log("sql", sql);
 

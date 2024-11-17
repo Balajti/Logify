@@ -2,8 +2,9 @@
 
 import { NextFetchEvent, NextRequest } from "next/server";
 import {Pool} from '@neondatabase/serverless'
-import zod, { string } from 'zod'
+import zod, { string, number, z, date } from 'zod'
 import sqlstring from 'sqlstring'
+import { start } from "repl";
 
 async function extractBody(req: NextRequest){
     if(!req.body) {
@@ -35,14 +36,22 @@ while(true){
 }
 
 const schema = zod.object({
-    handle: string().max(60).min(1),
+    id: number().max(10).min(1),
+    start_date : date(),
+    end_date : date(),
+    on_previous: date(),
+    on_next: date(),
 });
 
 async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     
     const body = await extractBody(req);
 
-    const {handle} = schema.parse(body)
+    const {id} = schema.parse(body)
+    const {start_date} = schema.parse(body)
+    const {end_date} = schema.parse(body)
+    const {on_previous} = schema.parse(body)
+    const {on_next} = schema.parse(body)
 
     console.log("body", body);
     
@@ -52,8 +61,8 @@ async function createPageHandler(req: NextRequest, event: NextFetchEvent){
     
     const sql= sqlstring.format(`
     INSERT INTO timesheet (id, start_date, end_date, on_previous, on_next) VALUES
-    (?, ?, ?, ?);
-    `, [handle]);
+    (?, ?, ?, ?, ?);
+    `, [id, start_date, end_date, on_previous, on_next]);
 
     console.log("sql", sql);
 
