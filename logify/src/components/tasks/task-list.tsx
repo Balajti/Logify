@@ -14,8 +14,13 @@ import {
 import { Card } from '@/components/ui/card';
 import { MoreVertical, Clock } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tasks } from '@/lib/types/task';
+import { selectAllTeamMembers, fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/lib/redux/store';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 export function TaskList() {
 
@@ -23,7 +28,13 @@ export function TaskList() {
     dispatch(deleteTaskAsync(taskId));
   };
 
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    dispatch(fetchTeamMembers());
+  }, [dispatch]);
+  const users = useAppSelector(selectAllTeamMembers);
+  console.log(users);
+
   const { items: tasks, filters } = useAppSelector((state) => state.tasks);
   const [editingTask, setEditingTask] = useState<Tasks | null>(null);
 
@@ -80,6 +91,7 @@ export function TaskList() {
                     {task.priority}
                   </Badge>
                 </div>
+                
                 <p className="text-sm text-gray-500">{task.description}</p>
                 <div className="flex items-center space-x-4 text-sm">
                   <div className="flex items-center space-x-1">
@@ -88,6 +100,19 @@ export function TaskList() {
                   </div>
                 </div>
               </div>
+              <div className="flex items-start justify-between">
+                    <Avatar>
+                    <AvatarImage 
+                      src={users.find((user) => user.tasks.includes(task.id))?.avatar || ''} 
+                    />
+                    <AvatarFallback>
+                      {users.find((user) => user.tasks.includes(task.id))?.name.charAt(0) || ''}
+                    </AvatarFallback>
+                    </Avatar>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium">{users.find((user) => user.tasks.includes(task.id))?.name}</h4>
+                  </div>
+                </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm">
