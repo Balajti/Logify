@@ -1,7 +1,8 @@
-// app/lib/features/tasks/tasksSlice.ts
-import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { tasksApi } from '@/lib/services/api';
+// lib/redux/features/tasks/tasksSlice.ts
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { RootState } from '../../store';
 
+// Type definitions
 export interface Task {
   id: number;
   title: string;
@@ -12,8 +13,6 @@ export interface Task {
   isCompleted: boolean;
   projectId: number;
   assignedTo: number[]; // team member IDs
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 interface TasksState {
@@ -36,6 +35,7 @@ interface TasksState {
   };
 }
 
+// Initial state
 const initialState: TasksState = {
   items: [],
   status: 'idle',
@@ -56,67 +56,6 @@ const initialState: TasksState = {
   },
 };
 
-// Async Thunks
-export const fetchTasks = createAsyncThunk(
-  'tasks/fetchTasks',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await tasksApi.getAll();
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch tasks');
-    }
-  }
-);
-
-export const fetchTasksByProject = createAsyncThunk(
-  'tasks/fetchTasksByProject',
-  async (projectId: number, { rejectWithValue }) => {
-    try {
-      const response = await tasksApi.getAll();
-      return response.data.filter((task: Task) => task.projectId === projectId);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch project tasks');
-    }
-  }
-);
-
-export const createTaskAsync = createAsyncThunk(
-  'tasks/createTask',
-  async (taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>, { rejectWithValue }) => {
-    try {
-      const response = await tasksApi.create(taskData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to create task');
-    }
-  }
-);
-
-export const updateTaskAsync = createAsyncThunk(
-  'tasks/updateTask',
-  async ({ id, data }: { id: number; data: Partial<Task> }, { rejectWithValue }) => {
-    try {
-      const response = await tasksApi.update(id, data);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to update task');
-    }
-  }
-);
-
-export const deleteTaskAsync = createAsyncThunk(
-  'tasks/deleteTask',
-  async (id: number, { rejectWithValue }) => {
-    try {
-      await tasksApi.delete(id);
-      return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to delete task');
-    }
-  }
-);
-
 // Helper function to calculate stats
 const calculateStats = (tasks: Task[]) => {
   const now = new Date();
@@ -125,24 +64,97 @@ const calculateStats = (tasks: Task[]) => {
     completed: tasks.filter(t => t.status === 'completed').length,
     inProgress: tasks.filter(t => t.status === 'in-progress').length,
     todo: tasks.filter(t => t.status === 'to-do').length,
-    overdue: tasks.filter(t => {
-      return !t.isCompleted && 
-        new Date(t.dueDate) < now
-    }).length,
+    overdue: tasks.filter(t => !t.isCompleted && new Date(t.dueDate) < now).length,
   };
 };
 
+// Async thunks
+export const fetchTasks = createAsyncThunk(
+  'tasks/fetchTasks',
+  async () => {
+    const response = await fetch('/api/tasks');
+    if (!response.ok) {
+      throw new Error('Failed to fetch tasks');
+    }
+    const data = await response.json();
+    return data;
+  }
+);
+
+export const fetchTasksByProject = createAsyncThunk(
+  'tasks/fetchTasksByProject',
+  async (projectId: number) => {
+    const response = await fetch(`/api/tasks?projectId=${projectId}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch project tasks');
+    }
+    const data = await response.json();
+    return data;
+  }
+);
+
+export const createTaskAsync = createAsyncThunk(
+  'tasks/createTask',
+  async (taskData: Omit<Task, 'id' | 'isCompleted'>) => {
+    const response = await fetch('/api/tasks', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...taskData, isCompleted: false }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create task');
+    }
+    const data = await response.json();
+    return data;
+  }
+);
+
+export const updateTaskAsync = createAsyncThunk(
+  'tasks/updateTask',
+  async ({ id, data }: { id: number; data: Partial<Task> }) => {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to update task');
+    }
+    const updatedTask = await response.json();
+    return updatedTask;
+  }
+);
+
+export const deleteTaskAsync = createAsyncThunk(
+  'tasks/deleteTask',
+  async (id: number) => {
+    const response = await fetch(`/api/tasks/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete task');
+    }
+    return id;
+  }
+);
+
+// Slice
 const tasksSlice = createSlice({
   name: 'tasks',
   initialState,
   reducers: {
-    setTaskFilters: (state, action: PayloadAction<Partial<TasksState['filters']>>) => {
+    // Regular reducers (synchronous actions)
+    setTaskFilters(state, action: PayloadAction<Partial<TasksState['filters']>>) {
       state.filters = { ...state.filters, ...action.payload };
     },
-    clearTaskFilters: (state) => {
+    clearTaskFilters(state) {
       state.filters = initialState.filters;
     },
-    toggleTaskComplete: (state, action: PayloadAction<number>) => {
+    toggleTaskComplete(state, action: PayloadAction<number>) {
       const task = state.items.find(t => t.id === action.payload);
       if (task) {
         task.isCompleted = !task.isCompleted;
@@ -150,7 +162,7 @@ const tasksSlice = createSlice({
         state.stats = calculateStats(state.items);
       }
     },
-    setTaskStatus: (state, action: PayloadAction<{ taskId: number; status: Task['status'] }>) => {
+    setTaskStatus(state, action: PayloadAction<{ taskId: number; status: Task['status'] }>) {
       const task = state.items.find(t => t.id === action.payload.taskId);
       if (task) {
         task.status = action.payload.status;
@@ -160,10 +172,22 @@ const tasksSlice = createSlice({
         state.stats = calculateStats(state.items);
       }
     },
+    assignTask(state, action: PayloadAction<{ taskId: number; memberId: number }>) {
+      const task = state.items.find(t => t.id === action.payload.taskId);
+      if (task && !task.assignedTo.includes(action.payload.memberId)) {
+        task.assignedTo.push(action.payload.memberId);
+      }
+    },
+    unassignTask(state, action: PayloadAction<{ taskId: number; memberId: number }>) {
+      const task = state.items.find(t => t.id === action.payload.taskId);
+      if (task) {
+        task.assignedTo = task.assignedTo.filter(id => id !== action.payload.memberId);
+      }
+    },
   },
   extraReducers: (builder) => {
+    // Fetch all tasks
     builder
-      // Fetch all tasks
       .addCase(fetchTasks.pending, (state) => {
         state.status = 'loading';
       })
@@ -174,9 +198,11 @@ const tasksSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload as string;
+        state.error = action.error.message || 'Failed to fetch tasks';
       })
-      // Fetch project tasks
+
+    // Fetch project tasks
+    builder
       .addCase(fetchTasksByProject.fulfilled, (state, action) => {
         const nonProjectTasks = state.items.filter(
           task => !action.payload.find((t: Task) => t.id === task.id)
@@ -184,28 +210,26 @@ const tasksSlice = createSlice({
         state.items = [...nonProjectTasks, ...action.payload];
         state.stats = calculateStats(state.items);
       })
-      // Create task
-      .addCase(createTaskAsync.pending, (state) => {
-        state.status = 'loading';
-      })
+
+    // Create task
+    builder
       .addCase(createTaskAsync.fulfilled, (state, action) => {
-        state.status = 'succeeded';
         state.items.push(action.payload);
         state.stats = calculateStats(state.items);
       })
-      .addCase(createTaskAsync.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.payload as string;
-      })
-      // Update task
+
+    // Update task
+    builder
       .addCase(updateTaskAsync.fulfilled, (state, action) => {
-        const index = state.items.findIndex(t => t.id === action.payload.id);
+        const index = state.items.findIndex(task => task.id === action.payload.id);
         if (index !== -1) {
           state.items[index] = action.payload;
           state.stats = calculateStats(state.items);
         }
       })
-      // Delete task
+
+    // Delete task
+    builder
       .addCase(deleteTaskAsync.fulfilled, (state, action) => {
         state.items = state.items.filter(task => task.id !== action.payload);
         state.stats = calculateStats(state.items);
@@ -219,25 +243,27 @@ export const {
   clearTaskFilters,
   toggleTaskComplete,
   setTaskStatus,
+  assignTask,
+  unassignTask,
 } = tasksSlice.actions;
 
-// Export reducer
-export default tasksSlice.reducer;
+// Export selectors
+export const selectAllTasks = (state: RootState) => state.tasks.items;
+export const selectTasksStatus = (state: RootState) => state.tasks.status;
+export const selectTasksError = (state: RootState) => state.tasks.error;
+export const selectTaskStats = (state: RootState) => state.tasks.stats;
+export const selectTaskFilters = (state: RootState) => state.tasks.filters;
 
-// Selectors
-export const selectAllTasks = (state: { tasks: TasksState }) => state.tasks.items;
-export const selectTasksStatus = (state: { tasks: TasksState }) => state.tasks.status;
-export const selectTasksError = (state: { tasks: TasksState }) => state.tasks.error;
-export const selectTaskFilters = (state: { tasks: TasksState }) => state.tasks.filters;
-export const selectTaskStats = (state: { tasks: TasksState }) => state.tasks.stats;
-
-export const selectTaskById = (state: { tasks: TasksState }, taskId: number) =>
+export const selectTaskById = (state: RootState, taskId: number) =>
   state.tasks.items.find(task => task.id === taskId);
 
-export const selectTasksByProject = (state: { tasks: TasksState }, projectId: number) =>
+export const selectTasksByProject = (state: RootState, projectId: number) =>
   state.tasks.items.filter(task => task.projectId === projectId);
 
-export const selectFilteredTasks = (state: { tasks: TasksState }) => {
+export const selectTasksByMember = (state: RootState, memberId: number) =>
+  state.tasks.items.filter(task => task.assignedTo.includes(memberId));
+
+export const selectFilteredTasks = (state: RootState) => {
   const { items, filters } = state.tasks;
   
   return items.filter(task => {
@@ -250,9 +276,12 @@ export const selectFilteredTasks = (state: { tasks: TasksState }) => {
   });
 };
 
-export const selectOverdueTasks = (state: { tasks: TasksState }) => {
+export const selectOverdueTasks = (state: RootState) => {
   const now = new Date();
   return state.tasks.items.filter(task => 
     !task.isCompleted && new Date(task.dueDate) < now
   );
 };
+
+// Export reducer
+export default tasksSlice.reducer;

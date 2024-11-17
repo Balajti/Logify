@@ -1,18 +1,31 @@
 'use client';
 
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { TimeDistribution } from '@/components/dashboard/time-distribution';
 import { ActiveProjects } from '@/components/dashboard/active-projects';
 import { Clock, Users, Briefcase, CheckSquare } from 'lucide-react';
-import React from 'react';
+import React, { useEffect } from 'react';
+import {
+  selectDashboardStats,
+  selectTimeDistribution,
+  selectActivities,
+  selectActiveProjectIds,
+  fetchDashboardData,
+} from '@/lib/redux/features/projects/projectsSlice';
 
 export default function DashboardPage() {
-  const { stats, timeDistribution, activities, activeProjects } = useAppSelector(
-    (state) => state.projects
-  );
+  const dispatch = useAppDispatch();
+  const stats = useAppSelector(selectDashboardStats);
+  const timeDistribution = useAppSelector(selectTimeDistribution);
+  const activities = useAppSelector(selectActivities);
+  const activeProjects = useAppSelector(selectActiveProjectIds);
+
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+  }, [dispatch]);
 
   return (
     <DashboardWrapper>
