@@ -1,106 +1,118 @@
-// app/api/dashboard/route.ts
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { QueryResult } from '@vercel/postgres';
+import { config } from 'dotenv';
+
+config();
+
+interface ProjectRow {
+  id: number;
+  name: string;
+  description: string;
+  status: string;
+  priority: string;
+  start_date: string;
+  end_date: string;
+  due_date: string;
+  progress: number;
+}
+
+const createProjectSchema = z.object({
+  name: z.string().min(1).max(255),
+  description: z.string().optional(),
+  status: z.enum(['not-started', 'in-progress', 'on-hold', 'completed', 'undefined'])
+    .default('undefined'),
+  priority: z.enum(['low', 'medium', 'high']),
+  start_date: z.string().optional(),
+  end_date: z.string().optional(),
+  due_date: z.string().optional(),
+  progress: z.number().min(0).max(100).optional(),
+  team_members: z.array(z.number()).optional()
+});
 
 export async function GET() {
+  console.log('Fetching projects...');
   try {
+    const projects: QueryResult<ProjectRow> = await sql`
+      SELECT * FROM projects
+    `;
+    console.log('Projects fetched successfully');
+    return NextResponse.json(projects.rows);
+  } catch (error) {
+    console.error('Failed to fetch projects:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch projects' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: Request) {
+  console.log('Creating project...');
+  try {
+    const json = await request.json();
+    const body = createProjectSchema.parse(json);
+    // Begin transaction
     await sql`BEGIN`;
     try {
-      // Get projects statistics
-      const projectsStats = await sql`
-        SELECT 
-          COUNT(*) as total_projects,
-          COUNT(*) FILTER (WHERE status = 'in-progress') as active_projects,
-          COUNT(*) FILTER (WHERE status = 'completed') as completed_projects
-        FROM projects
+      // Insert the project
+      const projectResult: QueryResult<ProjectRow> = await sql`
+        INSERT INTO projects (
+          name, 
+          description, 
+          status, 
+          priority, 
+          start_date, 
+          end_date, 
+          due_date, 
+          progress
+        )
+        VALUES (
+          ${body.name},
+          ${body.description},
+          ${body.status},
+          ${body.priority},
+          ${body.start_date},
+          ${body.end_date},
+          ${body.due_date},
+          ${body.progress ?? 0}
+        )
+        RETURNING *
       `;
-      // Get tasks statistics
-      const tasksStats = await sql`
-        SELECT 
-          COUNT(*) as total_tasks,
-          COUNT(*) FILTER (WHERE status = 'completed') as completed_tasks,
-          COUNT(*) FILTER (WHERE status = 'in-progress') as in_progress_tasks
-        FROM tasks
-      `;
-      // Get team members count
-      const teamStats = await sql`
-        SELECT COUNT(*) as total_members
-        FROM team_members
-      `;
-      // Calculate total hours from timesheet
-      const hoursStats = await sql`
-        SELECT COALESCE(SUM(hours), 0) as total_hours
-        FROM timesheet
-      `;
-      // Get active projects (limited to 5)
-      const activeProjects = await sql`
-        SELECT id 
-        FROM projects 
-        WHERE status = 'in-progress'
-        LIMIT 5
-      `;
+      const newProject = projectResult.rows[0];
+      console.log('Project created successfully:', newProject);
+      // If there are team members to assign, insert them
+      if (body.team_members?.length) {
+        await Promise.all(
+          body.team_members.map((memberId) =>
+            sql`
+              INSERT INTO project_team_members (project_id, team_member_id)
+              VALUES (${newProject.id}, ${memberId})
+            `
+          )
+        );
+      }
+      // Commit transaction
       await sql`COMMIT`;
-      // Prepare the dashboard data
-      const dashboardData = {
-        stats: {
-          totalHours: {
-            value: Number(hoursStats.rows[0].total_hours),
-            trend: { value: 12, isPositive: true } // Mock trend data
-          },
-          activeProjects: {
-            value: Number(projectsStats.rows[0].active_projects),
-            trend: { value: 2, isPositive: true } // Mock trend data
-          },
-          completedTasks: {
-            value: Number(tasksStats.rows[0].completed_tasks),
-            trend: { value: 8, isPositive: true } // Mock trend data
-          },
-          teamMembers: {
-            value: Number(teamStats.rows[0].total_members),
-            trend: { value: 3, isPositive: true } // Mock trend data
-          }
-        },
-        // Mock time distribution data since we don't have category information
-        timeDistribution: [
-          { name: 'Development', value: 45 },
-          { name: 'Meetings', value: 20 },
-          { name: 'Planning', value: 15 },
-          { name: 'Research', value: 20 }
-        ],
-        // Mock activities since we don't have an activities log table
-        activities: [
-          {
-            id: '1',
-            type: 'task',
-            description: 'completed a task',
-            timestamp: '2 hours ago',
-            user: { 
-              name: 'Team Member', 
-              avatar: null 
-            }
-          },
-          {
-            id: '2',
-            type: 'project',
-            description: 'updated project status',
-            timestamp: '3 hours ago',
-            user: { 
-              name: 'Team Member', 
-              avatar: null 
-            }
-          }
-        ],
-        activeProjects: activeProjects.rows.map(row => row.id)
-      };
-      return NextResponse.json(dashboardData);
+      return NextResponse.json(newProject, { status: 201 });
     } catch (error) {
+      // Rollback on error
       await sql`ROLLBACK`;
+      console.error('Failed to create project, rolling back:', error);
       throw error;
     }
   } catch (error) {
-    console.error('Dashboard data fetch error:', error);
+    console.error('Failed to create project:', error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: error.errors },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard data' },
+      { error: 'Failed to create project' },
       { status: 500 }
     );
   }

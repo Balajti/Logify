@@ -35,7 +35,6 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
   };
 
   const router = useRouter();
-
   const handleProjectClick = (projectId: number) => {
     router.push(`/projects/${projectId}`);
   };
@@ -63,7 +62,7 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
           </div>
           <div className="text-sm text-gray-500">Team</div>
           <div className="flex -space-x-2">
-            {project.team.map((memberId) => {
+            {project.team?.map((memberId) => {
               const member = teamMembers.find(m => m.id === memberId);
               return member ? (
                 <Avatar key={member.id} className="border-2 border-white">
@@ -74,7 +73,7 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
             })}
           </div>
           <div className="flex justify-between text-sm text-gray-500">
-            <span>Tasks: {project.task.completed}/{project.task.total}</span>
+            <span>Tasks: {project.task?.completed ?? 0}/{project.task?.total ?? 0}</span>
             <span>Due: {project.dueDate}</span>
           </div>
         </div>

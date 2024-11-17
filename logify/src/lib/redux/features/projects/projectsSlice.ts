@@ -1,6 +1,7 @@
-// lib/redux/features/projects/projectsSlice.ts
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from '../../store';
+// logify/src/lib/redux/features/projects/projectsSlice.ts
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { projectsApi, tasksApi, timesheetApi, teamApi } from '@/lib/services/api';
+import type { RootState } from '@/lib/redux/store';
 
 // Type definitions
 export interface Project {
@@ -20,15 +21,13 @@ export interface Project {
   };
   tasks: number[];
 }
+
 export interface Activity {
   id: string;
-  type: 'task' | 'project' | 'timesheet';
+  type: string;
   description: string;
   timestamp: string;
-  user: {
-    name: string;
-    avatar?: string;
-  };
+  user: { name: string };
 }
 
 export interface TimeDistributionData {
@@ -70,7 +69,6 @@ interface ProjectsState {
   activeProjects: number[];
 }
 
-// Initial state
 const initialState: ProjectsState = {
   items: [],
   status: 'idle',
@@ -82,150 +80,125 @@ const initialState: ProjectsState = {
   },
   dashboardStats: {
     totalHours: {
-      value: 164.2,
-      trend: { value: 12, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     activeProjects: {
-      value: 12,
-      trend: { value: 2, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     completedTasks: {
-      value: 48,
-      trend: { value: 8, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     teamMembers: {
-      value: 24,
-      trend: { value: 3, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
   },
-  timeDistribution: [
-    { name: 'Development', value: 45 },
-    { name: 'Meetings', value: 20 },
-    { name: 'Planning', value: 15 },
-    { name: 'Research', value: 20 },
-  ],
-  activities: [
-    {
-      id: '1',
-      type: 'task',
-      description: 'completed the login page design',
-      timestamp: '2 hours ago',
-      user: { name: 'John Doe' },
-    },
-    {
-      id: '2',
-      type: 'project',
-      description: 'started working on the API integration',
-      timestamp: '3 hours ago',
-      user: { name: 'Jane Smith' },
-    },
-  ],
-  activeProjects: [1, 2, 3],
+  timeDistribution: [],
+  activities: [],
+  activeProjects: [],
 };
 
-// Async thunks
-const fetchProjects = createAsyncThunk(
+// Async Thunks
+export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async () => {
-    const response = await fetch('/api/projects');
-    if (!response.ok) {
+    const response = await projectsApi.getAll();
+    if (response.status !== 200) {
       throw new Error('Failed to fetch projects');
     }
-    const data = await response.json();
-    return data;
-  }
-);
-
-const createProjectAsync = createAsyncThunk(
-  'projects/createProject',
-  async (projectData: Omit<Project, 'id'>) => {
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(projectData),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to create project');
-    }
-    const data = await response.json();
-    return data;
-  }
-);
-
-const updateProjectAsync = createAsyncThunk(
-  'projects/updateProject',
-  async ({ id, data }: { id: number; data: Partial<Project> }) => {
-    const response = await fetch(`/api/projects/${id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error('Failed to update project');
-    }
-    const updatedProject = await response.json();
-    return updatedProject;
-  }
-);
-
-const deleteProjectAsync = createAsyncThunk(
-  'projects/deleteProject',
-  async (id: number) => {
-    const response = await fetch(`/api/projects/${id}`, {
-      method: 'DELETE',
-    });
-    if (!response.ok) {
-      throw new Error('Failed to delete project');
-    }
-    return id;
+    return response.data;
   }
 );
 
 export const fetchDashboardData = createAsyncThunk(
   'projects/fetchDashboardData',
   async () => {
-    const response = await fetch('/api/dashboard');
-    if (!response.ok) {
-      throw new Error('Failed to fetch dashboard data');
-    }
-    return await response.json();
+    const [projectsResponse, tasksResponse, timesheetResponse, teamResponse] = await Promise.all([
+      projectsApi.getAll(),
+      tasksApi.getAll(),
+      timesheetApi.getAll(),
+      teamApi.getAll(),
+    ]);
+
+    const projects = projectsResponse.data;
+    const tasks = tasksResponse.data;
+    const timesheetEntries = timesheetResponse.data;
+    const teamMembers = teamResponse.data;
+
+    // Calculate total hours from timesheet entries
+    const totalHours = timesheetEntries.reduce((sum, entry) => sum + entry.hours, 0);
+
+    // Calculate completed tasks
+    const completedTasks = tasks.filter(task => task.status === 'completed').length;
+
+    // Calculate active projects
+    const activeProjects = projects.filter(project => project.status === 'in-progress').length;
+
+    // Calculate team members
+    const teamMembersCount = teamMembers.length;
+
+    // Calculate time distribution
+    const timeDistribution = [
+      { name: 'Development', value: timesheetEntries.filter(entry => entry.description.includes('Development')).reduce((sum, entry) => sum + entry.hours, 0) },
+      { name: 'Meetings', value: timesheetEntries.filter(entry => entry.description.includes('Meeting')).reduce((sum, entry) => sum + entry.hours, 0) },
+      { name: 'Planning', value: timesheetEntries.filter(entry => entry.description.includes('Planning')).reduce((sum, entry) => sum + entry.hours, 0) },
+      { name: 'Research', value: timesheetEntries.filter(entry => entry.description.includes('Research')).reduce((sum, entry) => sum + entry.hours, 0) },
+    ];
+
+    return {
+      stats: {
+        totalHours: {
+          value: totalHours,
+          trend: { value: 0, isPositive: true },
+        },
+        activeProjects: {
+          value: activeProjects,
+          trend: { value: 0, isPositive: true },
+        },
+        completedTasks: {
+          value: completedTasks,
+          trend: { value: 0, isPositive: true },
+        },
+        teamMembers: {
+          value: teamMembersCount,
+          trend: { value: 0, isPositive: true },
+        },
+      },
+      timeDistribution,
+      activities: [], // Add logic to fetch activities if needed
+      activeProjects: projects.filter(project => project.status === 'in-progress').map(project => project.id),
+    };
   }
 );
 
-// Slice
 const projectsSlice = createSlice({
   name: 'projects',
   initialState,
   reducers: {
-    // Regular reducers (synchronous actions)
-    setFilters(state, action: PayloadAction<Partial<ProjectsState['filters']>>) {
+    setFilters: (state, action: PayloadAction<Partial<ProjectsState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
-    clearFilters(state) {
+    clearFilters: (state) => {
       state.filters = initialState.filters;
     },
-    updateProjectProgress(state, action: PayloadAction<{ projectId: number; progress: number }>) {
-      const project = state.items.find(p => p.id === action.payload.projectId);
+    updateProjectProgress: (state, action: PayloadAction<{ projectId: number; progress: number }>) => {
+      const project = state.items.find(project => project.id === action.payload.projectId);
       if (project) {
         project.progress = action.payload.progress;
       }
     },
   },
   extraReducers: (builder) => {
-    // Fetch projects
     builder
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.dashboardStats = action.payload.stats;
         state.timeDistribution = action.payload.timeDistribution;
         state.activities = action.payload.activities;
         state.activeProjects = action.payload.activeProjects;
-      });
-    
-    builder
+      })
       .addCase(fetchProjects.pending, (state) => {
         state.status = 'loading';
       })
@@ -236,35 +209,6 @@ const projectsSlice = createSlice({
       .addCase(fetchProjects.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message || 'Failed to fetch projects';
-      })
-    
-    // Create project
-    builder
-      .addCase(createProjectAsync.pending, (state) => {
-        state.status = 'loading';
-      })
-      .addCase(createProjectAsync.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.items.push(action.payload);
-      })
-      .addCase(createProjectAsync.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = action.error.message || 'Failed to create project';
-      })
-    
-    // Update project
-    builder
-      .addCase(updateProjectAsync.fulfilled, (state, action) => {
-        const index = state.items.findIndex(project => project.id === action.payload.id);
-        if (index !== -1) {
-          state.items[index] = action.payload;
-        }
-      })
-    
-    // Delete project
-    builder
-      .addCase(deleteProjectAsync.fulfilled, (state, action) => {
-        state.items = state.items.filter(project => project.id !== action.payload);
       });
   },
 });
@@ -276,36 +220,13 @@ export const {
   updateProjectProgress,
 } = projectsSlice.actions;
 
-export {
-  fetchProjects,
-  createProjectAsync,
-  updateProjectAsync,
-  deleteProjectAsync,
-};
-
 // Export selectors
 export const selectAllProjects = (state: RootState) => state.projects.items;
-export const selectProjectById = (state: RootState, projectId: number) => 
+export const selectProjectById = (state: RootState, projectId: number) =>
   state.projects.items.find(project => project.id === projectId);
-export const selectProjectsStatus = (state: RootState) => state.projects.status;
-export const selectProjectsError = (state: RootState) => state.projects.error;
-export const selectProjectFilters = (state: RootState) => state.projects.filters;
-
 export const selectDashboardStats = (state: RootState) => state.projects.dashboardStats;
 export const selectTimeDistribution = (state: RootState) => state.projects.timeDistribution;
 export const selectActivities = (state: RootState) => state.projects.activities;
 export const selectActiveProjectIds = (state: RootState) => state.projects.activeProjects;
 
-export const selectFilteredProjects = (state: RootState) => {
-  const { items, filters } = state.projects;
-  
-  return items.filter(project => {
-    if (filters.status.length && !filters.status.includes(project.status)) return false;
-    if (filters.priority.length && !filters.priority.includes(project.priority)) return false;
-    if (filters.search && !project.name.toLowerCase().includes(filters.search.toLowerCase())) return false;
-    return true;
-  });
-};
-
-// Export reducer
 export default projectsSlice.reducer;

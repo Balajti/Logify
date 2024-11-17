@@ -37,7 +37,7 @@ interface TimesheetState {
     task_id: number | null;
   };
   summary: TimesheetSummary;
-  selectedEntry: number | null;
+  selectedEntry: TimesheetEntry | null;
 }
 
 const initialState: TimesheetState = {
@@ -163,7 +163,7 @@ const timesheetSlice = createSlice({
     clearTimesheetFilters: (state) => {
       state.filters = initialState.filters;
     },
-    selectEntry: (state, action: PayloadAction<number | null>) => {
+    selectEntry: (state, action: PayloadAction<TimesheetEntry>) => {
       state.selectedEntry = action.payload;
     },
     updateSummary: (state) => {
@@ -202,7 +202,7 @@ const timesheetSlice = createSlice({
       .addCase(deleteTimesheetEntry.fulfilled, (state, action) => {
         state.entries = state.entries.filter(e => e.id !== action.payload);
         state.summary = calculateTimesheetSummary(state.entries);
-        if (state.selectedEntry === action.payload) {
+        if (state.selectedEntry?.id === action.payload) {
           state.selectedEntry = null;
         }
       });
@@ -237,7 +237,7 @@ export const selectTimesheetSummary = (state: { timesheet: TimesheetState }) =>
   state.timesheet.summary;
 
 export const selectSelectedEntry = (state: { timesheet: TimesheetState }) =>
-  state.timesheet.entries.find(e => e.id === state.timesheet.selectedEntry);
+  state.timesheet.selectedEntry;
 
 export const selectFilteredEntries = (state: { timesheet: TimesheetState }) => {
   const { entries, filters } = state.timesheet;

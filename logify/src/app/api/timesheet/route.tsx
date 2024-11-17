@@ -2,6 +2,9 @@ import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { QueryResult } from '@vercel/postgres';
+import { config } from 'dotenv';
+
+config();
 
 interface TimesheetRow {
   id: number;
@@ -23,6 +26,7 @@ const createTimesheetSchema = z.object({
 });
 
 export async function GET(request: Request) {
+  console.log('Fetching timesheet entries...');
   try {
     const { searchParams } = new URL(request.url);
     const team_member_id = searchParams.get('team_member_id');
@@ -71,6 +75,7 @@ export async function GET(request: Request) {
     
     baseQuery += ` ORDER BY t.date DESC, t.created_at DESC`;
     const result = await sql.query(baseQuery, values);
+    console.log('Timesheet entries fetched successfully');
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Failed to fetch timesheet entries:', error);
@@ -82,9 +87,11 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  console.log('Creating timesheet entry...');
   try {
     const json = await request.json();
     const body = createTimesheetSchema.parse(json);
+    // Begin transaction
     await sql`BEGIN`;
     try {
       // First verify that the task belongs to the project
@@ -122,10 +129,11 @@ export async function POST(request: Request) {
         RETURNING *
       `;
       await sql`COMMIT`;
+      console.log('Timesheet entry created successfully');
       return NextResponse.json(result.rows[0], { status: 201 });
     } catch (error: any) {
       await sql`ROLLBACK`;
-      
+      console.error('Failed to create timesheet entry, rolling back:', error);
       // Check for unique constraint violation
       if (error.code === '23505') {
         return NextResponse.json(

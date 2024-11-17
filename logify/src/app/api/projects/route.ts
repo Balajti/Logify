@@ -2,6 +2,9 @@ import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { QueryResult } from '@vercel/postgres';
+import { config } from 'dotenv';
+
+config();
 
 interface ProjectRow {
   id: number;
@@ -29,10 +32,12 @@ const createProjectSchema = z.object({
 });
 
 export async function GET() {
+  console.log('Fetching projects...');
   try {
     const projects: QueryResult<ProjectRow> = await sql`
       SELECT * FROM projects
     `;
+    console.log('Projects fetched successfully');
     return NextResponse.json(projects.rows);
   } catch (error) {
     console.error('Failed to fetch projects:', error);
@@ -44,6 +49,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  console.log('Creating project...');
   try {
     const json = await request.json();
     const body = createProjectSchema.parse(json);
@@ -75,6 +81,7 @@ export async function POST(request: Request) {
         RETURNING *
       `;
       const newProject = projectResult.rows[0];
+      console.log('Project created successfully:', newProject);
       // If there are team members to assign, insert them
       if (body.team_members?.length) {
         await Promise.all(
@@ -92,6 +99,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // Rollback on error
       await sql`ROLLBACK`;
+      console.error('Failed to create project, rolling back:', error);
       throw error;
     }
   } catch (error) {

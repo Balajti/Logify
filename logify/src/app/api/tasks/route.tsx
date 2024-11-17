@@ -2,6 +2,9 @@ import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { QueryResult } from '@vercel/postgres';
+import { config } from 'dotenv';
+
+config();
 
 interface TaskRow {
   id: number;
@@ -24,10 +27,12 @@ const createTaskSchema = z.object({
 });
 
 export async function GET() {
+  console.log('Fetching tasks...');
   try {
     const tasks: QueryResult<TaskRow> = await sql`
       SELECT * FROM tasks
     `;
+    console.log('Tasks fetched successfully');
     return NextResponse.json(tasks.rows);
   } catch (error) {
     console.error('Failed to fetch tasks:', error);
@@ -39,6 +44,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  console.log('Creating task...');
   try {
     const json = await request.json();
     const body = createTaskSchema.parse(json);
@@ -66,6 +72,7 @@ export async function POST(request: Request) {
         RETURNING *
       `;
       const newTask = taskResult.rows[0];
+      console.log('Task created successfully:', newTask);
       // If there are team members to assign, insert them
       if (body.assigned_members?.length) {
         await Promise.all(
@@ -83,6 +90,7 @@ export async function POST(request: Request) {
     } catch (error) {
       // Rollback on error
       await sql`ROLLBACK`;
+      console.error('Failed to create task, rolling back:', error);
       throw error;
     }
   } catch (error) {

@@ -15,6 +15,7 @@ import {
   selectActiveProjectIds,
   fetchDashboardData,
 } from '@/lib/redux/features/projects/projectsSlice';
+import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
 
 export default function DashboardPage() {
   const dispatch = useAppDispatch();
@@ -22,10 +23,16 @@ export default function DashboardPage() {
   const timeDistribution = useAppSelector(selectTimeDistribution);
   const activities = useAppSelector(selectActivities);
   const activeProjects = useAppSelector(selectActiveProjectIds);
+  const timesheetSummary = useAppSelector(selectTimesheetSummary);
 
   useEffect(() => {
     dispatch(fetchDashboardData());
+    dispatch(fetchTimesheetEntries({}));
   }, [dispatch]);
+
+  if (!stats) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DashboardWrapper>
@@ -62,12 +69,14 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Charts and Activity */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <TimeDistribution data={timeDistribution} />
-          <ActiveProjects projectIds={activeProjects} />
-          <RecentActivity activities={activities} />
-        </div>
+        {/* Time Distribution */}
+        <TimeDistribution data={timeDistribution} />
+
+        {/* Recent Activity */}
+        <RecentActivity activities={activities} />
+
+        {/* Active Projects */}
+        <ActiveProjects projectIds={activeProjects} />
       </div>
     </DashboardWrapper>
   );

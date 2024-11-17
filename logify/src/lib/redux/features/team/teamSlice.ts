@@ -81,16 +81,16 @@ const calculateTeamStats = (members: TeamMember[]): TeamStats => {
     departmentDistribution[member.department] = 
       (departmentDistribution[member.department] || 0) + 1;
     
-    // Add to total workload
-    totalWorkload += member.workload.assigned;
+    // Safely add to total workload
+    totalWorkload += member.workload?.assigned || 0; // Add null check here
   });
 
   // Calculate top performers based on completion rate and on-time delivery
   const topPerformers = members
     .map(member => ({
       id: member.id,
-      score: (member.performance.tasksCompleted * 0.4) + 
-             (member.performance.onTime / Math.max(1, member.performance.tasksCompleted) * 0.6)
+      score: ((member.performance?.tasksCompleted || 0) * 0.4) + 
+             ((member.performance?.onTime || 0) / Math.max(1, member.performance?.tasksCompleted || 1) * 0.6)
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
@@ -111,7 +111,16 @@ export const fetchTeamMembers = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await teamApi.getAll();
-      return response.data;
+      // Transform the data to ensure it matches the interface
+      const transformedData = response.data.map((member: any) => ({
+        ...member,
+        workload: member.workload || { assigned: 0, completed: 0 },
+        performance: member.performance || { tasksCompleted: 0, onTime: 0, overdue: 0 },
+        availability: member.availability || 0,
+        projects: member.projects || [],
+        tasks: member.tasks || [],
+      }));
+      return transformedData;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.error || 'Failed to fetch team members');
     }
