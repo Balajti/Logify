@@ -69,7 +69,7 @@ const calculateStats = (tasks: Task[]) => {
 };
 
 // Async thunks
-export const fetchTasks = createAsyncThunk(
+const fetchTasks = createAsyncThunk(
   'tasks/fetchTasks',
   async () => {
     const response = await fetch('/api/tasks');
@@ -93,7 +93,7 @@ export const fetchTasksByProject = createAsyncThunk(
   }
 );
 
-export const createTaskAsync = createAsyncThunk(
+const createTaskAsync = createAsyncThunk(
   'tasks/createTask',
   async (taskData: Omit<Task, 'id' | 'isCompleted'>) => {
     const response = await fetch('/api/tasks', {
@@ -111,7 +111,7 @@ export const createTaskAsync = createAsyncThunk(
   }
 );
 
-export const updateTaskAsync = createAsyncThunk(
+const updateTaskAsync = createAsyncThunk(
   'tasks/updateTask',
   async ({ id, data }: { id: number; data: Partial<Task> }) => {
     const response = await fetch(`/api/tasks/${id}`, {
@@ -129,7 +129,7 @@ export const updateTaskAsync = createAsyncThunk(
   }
 );
 
-export const deleteTaskAsync = createAsyncThunk(
+const deleteTaskAsync = createAsyncThunk(
   'tasks/deleteTask',
   async (id: number) => {
     const response = await fetch(`/api/tasks/${id}`, {
@@ -246,6 +246,13 @@ export const {
   assignTask,
   unassignTask,
 } = tasksSlice.actions;
+
+export {
+  fetchTasks,
+  createTaskAsync,
+  updateTaskAsync,
+  deleteTaskAsync,
+};
 
 // Export selectors
 export const selectAllTasks = (state: RootState) => state.tasks.items;

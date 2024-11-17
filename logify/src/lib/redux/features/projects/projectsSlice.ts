@@ -124,7 +124,7 @@ const initialState: ProjectsState = {
 };
 
 // Async thunks
-export const fetchProjects = createAsyncThunk(
+const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async () => {
     const response = await fetch('/api/projects');
@@ -136,7 +136,7 @@ export const fetchProjects = createAsyncThunk(
   }
 );
 
-export const createProjectAsync = createAsyncThunk(
+const createProjectAsync = createAsyncThunk(
   'projects/createProject',
   async (projectData: Omit<Project, 'id'>) => {
     const response = await fetch('/api/projects', {
@@ -154,7 +154,7 @@ export const createProjectAsync = createAsyncThunk(
   }
 );
 
-export const updateProjectAsync = createAsyncThunk(
+const updateProjectAsync = createAsyncThunk(
   'projects/updateProject',
   async ({ id, data }: { id: number; data: Partial<Project> }) => {
     const response = await fetch(`/api/projects/${id}`, {
@@ -172,7 +172,7 @@ export const updateProjectAsync = createAsyncThunk(
   }
 );
 
-export const deleteProjectAsync = createAsyncThunk(
+const deleteProjectAsync = createAsyncThunk(
   'projects/deleteProject',
   async (id: number) => {
     const response = await fetch(`/api/projects/${id}`, {
@@ -275,6 +275,13 @@ export const {
   clearFilters,
   updateProjectProgress,
 } = projectsSlice.actions;
+
+export {
+  fetchProjects,
+  createProjectAsync,
+  updateProjectAsync,
+  deleteProjectAsync,
+};
 
 // Export selectors
 export const selectAllProjects = (state: RootState) => state.projects.items;

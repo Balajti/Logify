@@ -1,4 +1,4 @@
-import { Project } from "../redux/features/projects/projectsSlice";
+/* import { Project } from "../redux/features/projects/projectsSlice";
 import { TeamMember } from "../redux/features/team/teamSlice";
 import { Tasks } from "../types/task";
 
@@ -315,3 +315,4 @@ export const mockTeamMembers: TeamMember[] = [
         projects: [4],
     },
 ];
+ */

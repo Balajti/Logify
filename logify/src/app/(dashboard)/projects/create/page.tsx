@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { createProject } from '@/lib/redux/features/projects/projectsSlice';
+import { createProjectAsync  } from '@/lib/redux/features/projects/projectsSlice';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -62,7 +62,7 @@ export default function CreateProjectPage() {
     try {
         const formattedEndDate = format(values.endDate, 'yyyy-MM-dd');
         const formattedDueDate = format(values.endDate, 'MMM dd');
-      dispatch(createProject({
+      dispatch(createProjectAsync({
           ...values,
           startDate: format(values.startDate, 'yyyy-MM-dd'),
           endDate: formattedEndDate,

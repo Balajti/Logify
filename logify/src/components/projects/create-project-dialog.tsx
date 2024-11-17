@@ -30,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { createProject } from '@/lib/redux/features/projects/projectsSlice';
+import { createProjectAsync } from '@/lib/redux/features/projects/projectsSlice';
 
 const projectSchema = z.object({
   name: z.string().min(3, 'Project name must be at least 3 characters'),
@@ -65,7 +65,7 @@ export function CreateProjectDialog({
   });
 
   const onSubmit = (values: ProjectFormValues) => {
-    dispatch(createProject({
+    dispatch(createProjectAsync({
         ...values,
         progress: 0,
         team: [],

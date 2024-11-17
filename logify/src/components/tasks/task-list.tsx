@@ -1,7 +1,7 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { deleteTask, toggleTaskComplete, updateTask } from '@/lib/redux/features/tasks/tasksSlice';
+import { deleteTaskAsync , toggleTaskComplete, updateTaskAsync } from '@/lib/redux/features/tasks/tasksSlice';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,13 +16,12 @@ import { Card } from '@/components/ui/card';
 import { MoreVertical, Clock } from 'lucide-react';
 import { EditTaskDialog } from './edit-task-dialog';
 import { useState } from 'react';
-import { mockProjects, mockTeamMembers } from '@/lib/data/mockData';
 import { Tasks } from '@/lib/types/task';
 
 export function TaskList() {
 
   const handleTaskDelete = (taskId: number) => {
-    dispatch(deleteTask(taskId));
+    dispatch(deleteTaskAsync(taskId));
   };
 
   const dispatch = useAppDispatch();
@@ -48,7 +47,7 @@ export function TaskList() {
   };
 
   const handleTaskEdit = (task: Tasks) => {
-    dispatch(updateTask(task));
+    dispatch(updateTaskAsync({ id: task.id, data: task }));
     setEditingTask(null);
   };
 
@@ -77,7 +76,6 @@ export function TaskList() {
                 <div className="flex items-start justify-between">
                   <div>
                     <h4 className="text-sm font-medium leading-none">{task.title}</h4>
-                    <p className="text-sm text-gray-500">{mockProjects[task.projectId - 1].name}</p>
                   </div>
                   <Badge className={getPriorityColor(task.priority)}>
                     {task.priority}
@@ -89,10 +87,6 @@ export function TaskList() {
                     <Clock className="h-4 w-4" />
                     <span>Due {task.dueDate}</span>
                   </div>
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={mockTeamMembers[task.team[0] - 1].avatar} />
-                    <AvatarFallback>{mockTeamMembers[task.team[0] - 1].name.charAt(0)}</AvatarFallback>
-                  </Avatar>
                 </div>
               </div>
               <DropdownMenu>
@@ -102,9 +96,6 @@ export function TaskList() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setEditingTask(task)}>
-                    Edit
-                  </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => handleTaskDelete(task.id)}
                     className="text-red-600"
