@@ -12,7 +12,8 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
   dueDate: string;
   projectId: number;
-  assignedTo: number[]; // team member IDs
+  assignedTo: number[];
+  isCompleted: boolean;
 }
 
 interface TasksState {

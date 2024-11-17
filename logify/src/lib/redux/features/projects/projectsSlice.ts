@@ -3,7 +3,11 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { projectsApi, tasksApi, timesheetApi, teamApi } from '@/lib/services/api';
 import type { RootState } from '@/lib/redux/store';
 
-// Type definitions
+// Define the type for timesheet entry
+interface TimesheetEntry {
+  description: string;
+  hours: number;
+}
 export interface Project {
   id: number;
   name: string;
@@ -69,6 +73,92 @@ interface ProjectsState {
   activeProjects: number[];
 }
 
+
+// Async Thunks
+export const fetchProjects = createAsyncThunk(
+  'projects/fetchProjects',
+  async () => {
+    const response = await projectsApi.getAll();
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch projects');
+    }
+    return response.data;
+  }
+);
+
+export const fetchDashboardData = createAsyncThunk(
+  'projects/fetchDashboardData',
+  async () => {
+    const [projectsResponse, tasksResponse, timesheetResponse, teamResponse] = await Promise.all([
+      projectsApi.getAll(),
+      tasksApi.getAll(),
+      timesheetApi.getAll(),
+      teamApi.getAll(),
+    ]);
+
+    const projects = projectsResponse.data;
+    const tasks = tasksResponse.data;
+    const timesheetEntries = timesheetResponse.data;
+    const teamMembers = teamResponse.data;
+
+    // Calculate total hours from timesheet entries
+    const totalHours = timesheetEntries.reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0);
+
+    // Calculate completed tasks
+    const completedTasks = tasks.filter((task: { status: string }) => task.status === 'completed').length;
+
+    // Calculate active projects
+    const activeProjects = projects.filter((project: Project) => project.status === 'in-progress').length;
+
+    // Calculate team members
+    const teamMembersCount = teamMembers.length;
+
+    // Calculate time distribution
+    const timeDistribution = [
+      { name: 'Development', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Development')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
+      { name: 'Meetings', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Meeting')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
+      { name: 'Planning', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Planning')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
+      { name: 'Research', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Research')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
+    ];
+
+    return {
+      stats: {
+        totalHours: {
+          value: totalHours,
+          trend: { value: 0, isPositive: true },
+        },
+        activeProjects: {
+          value: activeProjects,
+          trend: { value: 0, isPositive: true },
+        },
+        completedTasks: {
+          value: completedTasks,
+          trend: { value: 0, isPositive: true },
+        },
+        teamMembers: {
+          value: teamMembersCount,
+          trend: { value: 0, isPositive: true },
+        },
+      },
+      timeDistribution,
+      activities: [], // Add logic to fetch activities if needed
+      activeProjects: projects.filter((project: Project) => project.status === 'in-progress').map((project: Project) => project.id),
+    };
+  }
+);
+
+export const createProject = createAsyncThunk(
+  'projects/createProject',
+  async (projectData: Omit<Project, 'id'>) => {
+    const response = await projectsApi.create(projectData);
+    if (response.status !== 201) {
+      console.log('Failed to create project:', projectData);
+      throw new Error('Failed to create project');
+    }
+    return response.data;
+  }
+);
+
 const initialState: ProjectsState = {
   items: [],
   status: 'idle',
@@ -100,79 +190,6 @@ const initialState: ProjectsState = {
   activities: [],
   activeProjects: [],
 };
-
-// Async Thunks
-export const fetchProjects = createAsyncThunk(
-  'projects/fetchProjects',
-  async () => {
-    const response = await projectsApi.getAll();
-    if (response.status !== 200) {
-      throw new Error('Failed to fetch projects');
-    }
-    return response.data;
-  }
-);
-
-export const fetchDashboardData = createAsyncThunk(
-  'projects/fetchDashboardData',
-  async () => {
-    const [projectsResponse, tasksResponse, timesheetResponse, teamResponse] = await Promise.all([
-      projectsApi.getAll(),
-      tasksApi.getAll(),
-      timesheetApi.getAll(),
-      teamApi.getAll(),
-    ]);
-
-    const projects = projectsResponse.data;
-    const tasks = tasksResponse.data;
-    const timesheetEntries = timesheetResponse.data;
-    const teamMembers = teamResponse.data;
-
-    // Calculate total hours from timesheet entries
-    const totalHours = timesheetEntries.reduce((sum, entry) => sum + entry.hours, 0);
-
-    // Calculate completed tasks
-    const completedTasks = tasks.filter(task => task.status === 'completed').length;
-
-    // Calculate active projects
-    const activeProjects = projects.filter(project => project.status === 'in-progress').length;
-
-    // Calculate team members
-    const teamMembersCount = teamMembers.length;
-
-    // Calculate time distribution
-    const timeDistribution = [
-      { name: 'Development', value: timesheetEntries.filter(entry => entry.description.includes('Development')).reduce((sum, entry) => sum + entry.hours, 0) },
-      { name: 'Meetings', value: timesheetEntries.filter(entry => entry.description.includes('Meeting')).reduce((sum, entry) => sum + entry.hours, 0) },
-      { name: 'Planning', value: timesheetEntries.filter(entry => entry.description.includes('Planning')).reduce((sum, entry) => sum + entry.hours, 0) },
-      { name: 'Research', value: timesheetEntries.filter(entry => entry.description.includes('Research')).reduce((sum, entry) => sum + entry.hours, 0) },
-    ];
-
-    return {
-      stats: {
-        totalHours: {
-          value: totalHours,
-          trend: { value: 0, isPositive: true },
-        },
-        activeProjects: {
-          value: activeProjects,
-          trend: { value: 0, isPositive: true },
-        },
-        completedTasks: {
-          value: completedTasks,
-          trend: { value: 0, isPositive: true },
-        },
-        teamMembers: {
-          value: teamMembersCount,
-          trend: { value: 0, isPositive: true },
-        },
-      },
-      timeDistribution,
-      activities: [], // Add logic to fetch activities if needed
-      activeProjects: projects.filter(project => project.status === 'in-progress').map(project => project.id),
-    };
-  }
-);
 
 const projectsSlice = createSlice({
   name: 'projects',
@@ -209,6 +226,17 @@ const projectsSlice = createSlice({
       .addCase(fetchProjects.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message || 'Failed to fetch projects';
+      })
+      .addCase(createProject.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(createProject.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items.push(action.payload);
+      })
+      .addCase(createProject.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message || 'Failed to create project';
       });
   },
 });

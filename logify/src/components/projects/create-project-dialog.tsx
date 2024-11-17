@@ -1,9 +1,8 @@
 'use client';
 
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -29,55 +28,77 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from '@/lib/redux/hooks';
-import { createProjectAsync } from '@/lib/redux/features/projects/projectsSlice';
+import { Project } from '@/lib/redux/features/projects/projectsSlice';
+import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { createProject } from '@/lib/redux/features/projects/projectsSlice';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/lib/redux/store';
 
-const projectSchema = z.object({
-  name: z.string().min(3, 'Project name must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+const formSchema = z.object({
+  name: z.string().min(1, "Project name is required"),
+  description: z.string(),
   status: z.enum(['not-started', 'in-progress', 'on-hold', 'completed']),
   priority: z.enum(['low', 'medium', 'high']),
-  startDate: z.string(),
-  endDate: z.string(),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 });
-
-type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
+const defaultValues: Omit<Project, 'id'> = {
+  name: '',
+  description: '',
+  status: 'not-started',
+  priority: 'medium',
+  startDate: '',
+  endDate: '',
+  dueDate: '',
+  progress: 0,
+  team: [],
+  tasks: [],
+  task: { total: 0, completed: 0 },
+};
+
 export function CreateProjectDialog({
   open,
   onClose,
 }: CreateProjectDialogProps) {
-  const dispatch = useAppDispatch();
-
-  const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectSchema),
-    defaultValues: {
-      status: 'not-started',
-      priority: 'medium',
-      startDate: format(new Date(), 'yyyy-MM-dd'),
-      endDate: format(new Date(), 'yyyy-MM-dd'),
-    },
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues,
   });
 
-  const onSubmit = (values: ProjectFormValues) => {
-    dispatch(createProjectAsync({
-        ...values,
+  const handleSubmit = async (data: Omit<Project, 'id'>) => {
+    try {
+      const formattedStartDate = format(new Date(data.startDate), 'yyyy-MM-dd');
+      const formattedEndDate = format(new Date(data.endDate), 'yyyy-MM-dd');
+      const formattedDueDate = format(new Date(data.endDate), 'MMM dd');
+      await dispatch(createProject({
+        ...data,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        dueDate: formattedDueDate,
         progress: 0,
         team: [],
-        task: {
-            total: 0,
-            completed: 0,
-        },
+        task: { total: 0, completed: 0 },
         tasks: [],
-        dueDate: ""
-    }));
+      }));
+      router.push('/projects');
+      setError(null);
+    } catch (err) {
+      const errorMessage = (err as Error).message || 'Failed to create project';
+      console.error(errorMessage);
+      setError(errorMessage);
+    }
     onClose();
-    form.reset();
   };
 
   return (
@@ -88,7 +109,7 @@ export function CreateProjectDialog({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"

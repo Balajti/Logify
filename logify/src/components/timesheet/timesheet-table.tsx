@@ -21,6 +21,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2 } from 'lucide-react';
 import { SubmitTimesheetDialog } from './submit-timesheet-dialog';
+import { TimesheetEntry } from '@/lib/redux/features/timesheet/timesheetSlice';
+import { Task } from '@/lib/redux/features/tasks/tasksSlice';
 
 interface TimeEntry {
   id: string;
@@ -32,10 +34,10 @@ interface TimeEntry {
 
 interface TimesheetTableProps {
   startDate: Date;
+  entries: TimesheetEntry[];
   employeeId?: string;
   isAdminView?: boolean;
 }
-
 
 const projectTasks: { [key: string]: string[] } = {
   'website-redesign': ['UI Development', 'Backend Integration', 'Testing'],
@@ -45,42 +47,35 @@ const projectTasks: { [key: string]: string[] } = {
 
 export function TimesheetTable({ 
   startDate, 
+  entries, 
   employeeId, 
   isAdminView = false 
 }: TimesheetTableProps) {
   console.log('TimesheetTable:', startDate, employeeId, isAdminView);
-  const [entries, setEntries] = useState<TimeEntry[]>([
-    {
-      id: '1',
-      project: 'website-redesign',
-      task: 'UI Development',
-      hours: {
-        [format(startDate, 'yyyy-MM-dd')]: '8',
-        [format(addDays(startDate, 1), 'yyyy-MM-dd')]: '7',
-      },
-      total: 15,
-    },
-  ]);
+  const [localEntries, setLocalEntries] = useState<TimeEntry[]>(entries.map(entry => ({
+    id: entry.id.toString(),
+    project: '',
+    task: '',
+    hours: {},
+    total: 0,
+  })));
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
-
   const addNewEntry = () => {
     const newEntry: TimeEntry = {
-      id: `entry-${entries.length + 1}`,
+      id: `entry-${localEntries.length + 1}`,
       project: '',
       task: '',
       hours: {},
       total: 0,
     };
-    setEntries([...entries, newEntry]);
+    setLocalEntries([...localEntries, newEntry]);
   };
-
   const removeEntry = (id: string) => {
-    setEntries(entries.filter(entry => entry.id !== id));
+    setLocalEntries(localEntries.filter(entry => entry.id !== id));
   };
-
   const updateEntry = (id: string, field: string, value: string) => {
-    setEntries(entries.map(entry => {
+    setLocalEntries(localEntries.map(entry => {
       if (entry.id === id) {
         if (field === 'project') {
           return { ...entry, project: value, task: '' };
@@ -90,9 +85,8 @@ export function TimesheetTable({
       return entry;
     }));
   };
-
   const updateHours = (id: string, date: string, value: string) => {
-    setEntries(entries.map(entry => {
+    setLocalEntries(localEntries.map(entry => {
       if (entry.id === id) {
         const newHours = { ...entry.hours, [date]: value };
         const total = Object.values(newHours)
@@ -102,7 +96,6 @@ export function TimesheetTable({
       return entry;
     }));
   };
-
   return (
     <div className="space-y-4">
       <Table>
@@ -123,7 +116,7 @@ export function TimesheetTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {entries.map(entry => (
+          {localEntries.map(entry => (
             <TableRow key={entry.id}>
               <TableCell>
                 <Select
@@ -197,12 +190,11 @@ export function TimesheetTable({
           open={showSubmitDialog}
           onClose={() => setShowSubmitDialog(false)}
           onSubmit={() => {
-            console.log('Submitting timesheet:', entries);
+            console.log('Submitting timesheet:', localEntries);
             setShowSubmitDialog(false);
           }}
         />
       </div>
-      
     </div>
   );
 }

@@ -39,7 +39,7 @@ export default function TasksPage() {
         </div>
 
         <TaskFilters />
-        <TaskList tasks={tasks} />
+        <TaskList />
 
         <EditTaskDialog
           task={null}
