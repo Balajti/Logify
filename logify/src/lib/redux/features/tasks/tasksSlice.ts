@@ -203,7 +203,7 @@ export const { setTaskFilters, clearTaskFilters, toggleTaskComplete, setTaskStat
 export { fetchTasks, createTaskAsync, updateTaskAsync, deleteTaskAsync };
 
 // Export selectors
-export const selectAllTasks = (state: RootState) => state.tasks.items;
+export const selectAllTasks = (state: RootState) => (state.tasks as TasksState).items;
 export const selectTasksStatus = (state: RootState) => state.tasks.status;
 export const selectTasksError = (state: RootState) => state.tasks.error;
 

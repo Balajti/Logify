@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Select,
   SelectContent,
@@ -9,19 +9,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TimesheetTable } from './timesheet-table';
-import { startOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-
-const mockEmployees = [
-  { id: '2', name: 'Demo Employee' },
-  { id: '3', name: 'John Doe' },
-  { id: '4', name: 'Jane Smith' },
-];
+import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
+import { selectAllTeamMembers, fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
+import { fetchTimesheetEntries, selectFilteredEntries } from '@/lib/redux/features/timesheet/timesheetSlice';
 
 export function AdminTimesheetView() {
   const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+
+  const dispatch = useAppDispatch();
+  const users = useAppSelector(selectAllTeamMembers);
+  useEffect(() => {
+    dispatch(fetchTeamMembers());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (selectedEmployee) {
+      dispatch(fetchTimesheetEntries({ team_member_id: Number(selectedEmployee), startDate: weekStart.toISOString(), endDate: weekEnd.toISOString() }));
+    }
+  }, [dispatch, selectedEmployee, weekStart, weekEnd]);
+
+  const timesheetEntries = useAppSelector(selectFilteredEntries);
+
 
   const handlePreviousWeek = () => {
     setCurrentDate(prev => subWeeks(prev, 1));
@@ -30,8 +44,6 @@ export function AdminTimesheetView() {
   const handleNextWeek = () => {
     setCurrentDate(prev => addWeeks(prev, 1));
   };
-
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
 
   return (
     <div className="space-y-6">
@@ -47,11 +59,11 @@ export function AdminTimesheetView() {
                 <SelectValue placeholder="Select employee" />
               </SelectTrigger>
               <SelectContent>
-                {mockEmployees.map((employee) => (
-                  <SelectItem key={employee.id} value={employee.id}>
-                    {employee.name}
-                  </SelectItem>
-                ))}
+                  {users.map((user) => (
+                    <SelectItem key={user.id} value={user.id.toString()}>
+                      {user.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
             <Button variant="outline" size="icon" onClick={handleNextWeek}>
@@ -64,6 +76,7 @@ export function AdminTimesheetView() {
       {selectedEmployee ? (
         <TimesheetTable 
           startDate={weekStart}
+          entries={timesheetEntries}
           employeeId={selectedEmployee} 
           isAdminView={true}
         />

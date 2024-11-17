@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useEffect } from 'react';
 import * as z from "zod";
 import {
   Dialog,
@@ -28,24 +29,31 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/lib/redux/store';
+import { useRouter } from 'next/navigation';
+import { selectAllTeamMembers, fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
+import { createTaskAsync } from '@/lib/redux/features/tasks/tasksSlice';
+import { useAppSelector } from '@/lib/redux/hooks';
+import { selectAllProjects, fetchProjects } from '@/lib/redux/features/projects/projectsSlice';
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
-  status: z.enum(["todo", "in-progress", "completed"]),
+  status: z.enum(["to-do", "in-progress", "completed"]),
   priority: z.enum(["low", "medium", "high"]),
-  dueDate: z.string(),
-  project: z.string(),
-  assigneeId: z.string(),
+  due_date: z.string(),
+  project_id: z.string(),
+  assignee_id: z.string(),
 });
 
 type TaskFormValues = z.infer<typeof taskSchema>;
 
 interface EditTaskDialogProps {
-  task: any | null; // Replace 'any' with your Task type
+  task: any | null;
   open: boolean;
   onClose: () => void;
-  onSave: (task: any) => void; // Replace 'any' with your Task type
+  onSave: (task: any) => void;
 }
 
 export function EditTaskDialog({
@@ -61,25 +69,47 @@ export function EditTaskDialog({
       description: task.description,
       status: task.status,
       priority: task.priority,
-      dueDate: task.dueDate,
-      project: task.project,
-      assigneeId: task.assignee.id,
+      due_date: task.dueDate,
+      project_id: task.projectId,
+      assignee_id: task.assignee.id,
     } : {
-      status: 'todo',
+      status: 'to-do',
       priority: 'medium',
     },
   });
 
-  const onSubmit = (values: TaskFormValues) => {
-    onSave({
-      ...task,
-      ...values,
-      assignee: {
-        // In a real app, you'd look up the assignee details
-        id: values.assigneeId,
-        name: "John Doe", // This would come from your user data
-      },
-    });
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+
+  const users = useAppSelector(selectAllTeamMembers);
+  useEffect(() => {
+    dispatch(fetchTeamMembers());
+  }, [dispatch]);
+
+  const projects = useAppSelector(selectAllProjects);
+  useEffect(() => {
+    dispatch(fetchProjects());
+  }, [dispatch]);
+
+  const onSubmit = async (values: TaskFormValues) => {
+    try {
+      const project_id = Number(values.project_id);
+      const assigned_members = [Number(values.assignee_id)];
+      
+      await dispatch(createTaskAsync({
+        title: values.title,
+        description: values.description,
+        status: values.status,
+        priority: values.priority,
+        dueDate: values.due_date,
+        projectId: project_id,
+        assignedTo: assigned_members,
+      }));
+      
+      router.push('/tasks');
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
   };
 
   return (
@@ -133,7 +163,7 @@ export function EditTaskDialog({
                     <FormLabel>Status</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || "to-do"} // Provide a default value
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -141,7 +171,7 @@ export function EditTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="to-do">To Do</SelectItem>
                         <SelectItem value="in-progress">In Progress</SelectItem>
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
@@ -159,7 +189,7 @@ export function EditTaskDialog({
                     <FormLabel>Priority</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      value={field.value || "low"} // Provide a default value
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -181,7 +211,7 @@ export function EditTaskDialog({
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="dueDate"
+                name="due_date"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Due Date</FormLabel>
@@ -195,7 +225,7 @@ export function EditTaskDialog({
 
               <FormField
                 control={form.control}
-                name="project"
+                name="project_id"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Project</FormLabel>
@@ -209,9 +239,39 @@ export function EditTaskDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="website-redesign">Website Redesign</SelectItem>
-                        <SelectItem value="mobile-app">Mobile App</SelectItem>
-                        <SelectItem value="api-integration">API Integration</SelectItem>
+                        {projects.map((project) => (
+                          <SelectItem key={project.id} value={project.id.toString()}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="assignee_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assign to</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a team member" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {users.map((member) => (
+                          <SelectItem key={member.id} value={member.id.toString()}>
+                            {member.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

@@ -21,9 +21,9 @@ const createTaskSchema = z.object({
   description: z.string().optional(),
   status: z.enum(['to-do', 'in-progress', 'completed']).default('to-do'),
   priority: z.enum(['low', 'medium', 'high']),
-  due_date: z.string().optional(),
-  project_id: z.number(),
-  assigned_members: z.array(z.number()).optional()
+  dueDate: z.string().optional(),
+  projectId: z.number(),
+  assignedTo: z.array(z.number()).optional()
 });
 
 export async function GET() {
@@ -66,17 +66,17 @@ export async function POST(request: Request) {
           ${body.description},
           ${body.status},
           ${body.priority},
-          ${body.due_date},
-          ${body.project_id}
+          ${body.dueDate},
+          ${body.projectId}
         )
         RETURNING *
       `;
       const newTask = taskResult.rows[0];
       console.log('Task created successfully:', newTask);
       // If there are team members to assign, insert them
-      if (body.assigned_members?.length) {
+      if (body.assignedTo?.length) {
         await Promise.all(
-          body.assigned_members.map((memberId) =>
+          body.assignedTo.map((memberId) =>
             sql`
               INSERT INTO task_team_members (task_id, team_member_id)
               VALUES (${newTask.id}, ${memberId})
