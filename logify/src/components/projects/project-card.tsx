@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/lib/redux/features/projects/projectsSlice";
 import { useRouter } from "next/navigation";
-import { mockTeamMembers } from "@/lib/data/mockData";
+import { useAppSelector } from '@/lib/redux/hooks';
+import { selectAllTeamMembers } from '@/lib/redux/features/team/teamSlice';
 
 interface ProjectCardProps {
   project: Project;
@@ -12,7 +13,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
-  console.log(isAdmin);
+  const teamMembers = useAppSelector(selectAllTeamMembers);
+
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-gray-100 text-gray-800',
@@ -39,45 +41,42 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => handleProjectClick(project.id)} >
-      <CardHeader className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-lg">{project.name}</h3>
-          <div className="flex gap-2">
-            <Badge variant="secondary" className={getStatusColor(project.status)}>
-              {project.status}
-            </Badge>
-            <Badge variant="secondary" className={getPriorityColor(project.priority)}>
+    <Card onClick={() => handleProjectClick(project.id)} className="cursor-pointer">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <h3 className="text-lg font-semibold">{project.name}</h3>
+          {isAdmin && (
+            <Badge className={getPriorityColor(project.priority)}>
               {project.priority}
             </Badge>
-          </div>
+          )}
         </div>
-        <p className="text-sm text-gray-500">{project.description}</p>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span>Progress</span>
-            <span>{project.progress}%</span>
+          <p className="text-sm text-gray-500">{project.description}</p>
+          <div className="flex items-center justify-between">
+            <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
+              {project.status}
+            </span>
+            <Progress value={project.progress} className="w-full" />
           </div>
-          <Progress value={project.progress} />
-        </div>
-        
-        <div className="space-y-2">
           <div className="text-sm text-gray-500">Team</div>
           <div className="flex -space-x-2">
-            {project.team.map((memberId) => (
-              <Avatar key={mockTeamMembers[memberId-1].id} className="border-2 border-white">
-                <AvatarImage src={mockTeamMembers[memberId-1].avatar} />
-                <AvatarFallback>{mockTeamMembers[memberId-1].name.charAt(0)}</AvatarFallback>
-              </Avatar>
-            ))}
+            {project.team.map((memberId) => {
+              const member = teamMembers.find(m => m.id === memberId);
+              return member ? (
+                <Avatar key={member.id} className="border-2 border-white">
+                  <AvatarImage src={member.avatar} />
+                  <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+              ) : null;
+            })}
           </div>
-        </div>
-
-        <div className="flex justify-between text-sm text-gray-500">
-          <span>Tasks: {project.task.completed}/{project.task.total}</span>
-          <span>Due: {project.dueDate}</span>
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>Tasks: {project.task.completed}/{project.task.total}</span>
+            <span>Due: {project.dueDate}</span>
+          </div>
         </div>
       </CardContent>
     </Card>

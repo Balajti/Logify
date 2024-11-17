@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { mockProjects } from "@/lib/data/mockData";
+import { useAppSelector } from '@/lib/redux/hooks';
+import { selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
 import type { Project } from '@/lib/redux/features/projects/projectsSlice';
 
 interface ActiveProjectsProps {
@@ -8,12 +9,9 @@ interface ActiveProjectsProps {
 }
 
 export function ActiveProjects({ projectIds }: ActiveProjectsProps) {
-  const projects = projectIds.map((projectId) => {
-    const project = mockProjects.find((project) => project.id === projectId);
-    return {
-      ...project,
-    };
-  });
+  const projects = useAppSelector(selectAllProjects);
+  const activeProjects = projects.filter(project => projectIds.includes(project.id));
+
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-yellow-100 text-yellow-800',
@@ -23,7 +21,6 @@ export function ActiveProjects({ projectIds }: ActiveProjectsProps) {
     };
     return colors[status as keyof typeof colors] || colors['in-progress'];
   };
-  
 
   return (
     <Card className="col-span-2">
@@ -32,7 +29,7 @@ export function ActiveProjects({ projectIds }: ActiveProjectsProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
-          {projects.map((project) => (
+          {activeProjects.map((project) => (
             <div key={`${project.id}-${project.dueDate}`} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div>
