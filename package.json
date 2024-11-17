@@ -1,8 +1,12 @@
 {
   "dependencies": {
     "@neondatabase/serverless": "^0.10.3",
+    "@reduxjs/toolkit": "^2.3.0",
+    "@vercel/postgres": "^0.10.0",
+    "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.36.3",
+    "react-redux": "^9.1.2",
     "sqlstring": "^2.3.3",
     "zod": "^3.23.8"
   },

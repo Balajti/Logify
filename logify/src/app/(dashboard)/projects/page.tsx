@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthorization } from '@/hooks/use-authorization';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,9 @@ import { ProjectCard } from '@/components/projects/project-card';
 import { ProjectFilters } from '@/components/projects/project-filters';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { Plus } from 'lucide-react';
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { useSession } from 'next-auth/react';
+import { fetchProjects } from '@/lib/redux/features/projects/projectsSlice';
 
 export default function ProjectsPage() {
   const { isAdmin } = useAuthorization();
@@ -23,6 +25,16 @@ export default function ProjectsPage() {
     
     return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  const { data: session } = useSession();
+  const dispatch = useAppDispatch();
+  const projectsRedux = useAppSelector(state => state.projects.items);
+  console.log(projectsRedux);
+  useEffect(() => {
+    if (session) {
+      dispatch(fetchProjects());
+    }
+  }, [dispatch, session]);
 
   return (
     <DashboardWrapper>

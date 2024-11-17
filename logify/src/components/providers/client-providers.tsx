@@ -1,18 +1,19 @@
 'use client';
 
+import { Session } from 'next-auth';
 import { SessionProvider } from 'next-auth/react';
-import { ReduxProvider } from '@/lib/redux/provider';
+import { Provider as ReduxProvider } from 'react-redux';
+import { store } from '@/lib/redux/store';
 
 interface ClientProvidersProps {
   children: React.ReactNode;
-  // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-  session: any;
+  session: Session | null;
 }
 
 export function ClientProviders({ children, session }: ClientProvidersProps) {
   return (
     <SessionProvider session={session}>
-      <ReduxProvider>
+      <ReduxProvider store={store}>
         {children}
       </ReduxProvider>
     </SessionProvider>
