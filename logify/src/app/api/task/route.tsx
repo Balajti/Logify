@@ -1,17 +1,15 @@
-import { sql, db } from '@vercel/postgres';
+import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { QueryResult } from '@vercel/postgres';
 
-// Type for task insert result
 interface TaskRow {
   id: number;
   title: string;
-  description: string | null;
+  description: string;
   status: string;
   priority: string;
-  due_date: Date | null;
-  is_completed: boolean;
+  due_date: string;
   project_id: number;
 }
 
@@ -25,14 +23,27 @@ const createTaskSchema = z.object({
   assigned_members: z.array(z.number()).optional()
 });
 
+export async function GET() {
+  try {
+    const tasks: QueryResult<TaskRow> = await sql`
+      SELECT * FROM tasks
+    `;
+    return NextResponse.json(tasks.rows);
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch tasks' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createTaskSchema.parse(json);
-
     // Begin transaction
     await sql`BEGIN`;
-
     try {
       // Insert the task
       const taskResult: QueryResult<TaskRow> = await sql`
@@ -54,9 +65,7 @@ export async function POST(request: Request) {
         )
         RETURNING *
       `;
-
       const newTask = taskResult.rows[0];
-
       // If there are team members to assign, insert them
       if (body.assigned_members?.length) {
         await Promise.all(
@@ -68,10 +77,8 @@ export async function POST(request: Request) {
           )
         );
       }
-
       // Commit transaction
       await sql`COMMIT`;
-
       return NextResponse.json(newTask, { status: 201 });
     } catch (error) {
       // Rollback on error
@@ -87,7 +94,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
     return NextResponse.json(
       { error: 'Failed to create task' },
       { status: 500 }

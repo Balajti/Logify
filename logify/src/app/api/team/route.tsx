@@ -6,11 +6,11 @@ import { QueryResult } from '@vercel/postgres';
 interface TeamMemberRow {
   id: number;
   name: string;
-  role: string | null;
-  department: string | null;
+  role: string;
+  department: string;
   email: string;
-  phone: string | null;
-  avatar: string | null;
+  phone: string;
+  avatar: string;
   status: string;
 }
 
@@ -24,11 +24,26 @@ const createTeamMemberSchema = z.object({
   status: z.enum(['active', 'away', 'offline']).default('offline')
 });
 
+export async function GET() {
+  try {
+    const result: QueryResult<TeamMemberRow> = await sql`
+      SELECT * FROM team_members 
+      ORDER BY name ASC
+    `;
+    return NextResponse.json(result.rows);
+  } catch (error) {
+    console.error('Failed to fetch team members:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch team members' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createTeamMemberSchema.parse(json);
-
     // Try to create the team member
     try {
       const result: QueryResult<TeamMemberRow> = await sql`
@@ -52,7 +67,6 @@ export async function POST(request: Request) {
         )
         RETURNING *
       `;
-
       return NextResponse.json(result.rows[0], { status: 201 });
     } catch (error: any) {
       // Check for unique email constraint violation
@@ -73,27 +87,8 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
     return NextResponse.json(
       { error: 'Failed to create team member' },
-      { status: 500 }
-    );
-  }
-}
-
-// GET method to fetch all team members
-export async function GET() {
-  try {
-    const result: QueryResult<TeamMemberRow> = await sql`
-      SELECT * FROM team_members 
-      ORDER BY name ASC
-    `;
-
-    return NextResponse.json(result.rows);
-  } catch (error) {
-    console.error('Failed to fetch team members:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch team members' },
       { status: 500 }
     );
   }

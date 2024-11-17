@@ -6,15 +6,13 @@ import { QueryResult } from '@vercel/postgres';
 interface ProjectRow {
   id: number;
   name: string;
-  description: string | null;
+  description: string;
   status: string;
   priority: string;
-  start_date: Date | null;
-  end_date: Date | null;
-  due_date: Date | null;
+  start_date: string;
+  end_date: string;
+  due_date: string;
   progress: number;
-  task_total: number;
-  task_completed: number;
 }
 
 const createProjectSchema = z.object({
@@ -30,14 +28,27 @@ const createProjectSchema = z.object({
   team_members: z.array(z.number()).optional()
 });
 
+export async function GET() {
+  try {
+    const projects: QueryResult<ProjectRow> = await sql`
+      SELECT * FROM projects
+    `;
+    return NextResponse.json(projects.rows);
+  } catch (error) {
+    console.error('Failed to fetch projects:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch projects' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const json = await request.json();
     const body = createProjectSchema.parse(json);
-
     // Begin transaction
     await sql`BEGIN`;
-
     try {
       // Insert the project
       const projectResult: QueryResult<ProjectRow> = await sql`
@@ -63,9 +74,7 @@ export async function POST(request: Request) {
         )
         RETURNING *
       `;
-
       const newProject = projectResult.rows[0];
-
       // If there are team members to assign, insert them
       if (body.team_members?.length) {
         await Promise.all(
@@ -77,10 +86,8 @@ export async function POST(request: Request) {
           )
         );
       }
-
       // Commit transaction
       await sql`COMMIT`;
-
       return NextResponse.json(newProject, { status: 201 });
     } catch (error) {
       // Rollback on error
@@ -96,7 +103,6 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
     return NextResponse.json(
       { error: 'Failed to create project' },
       { status: 500 }

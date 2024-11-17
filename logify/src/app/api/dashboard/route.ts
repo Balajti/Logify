@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     await sql`BEGIN`;
-
     try {
       // Get projects statistics
       const projectsStats = await sql`
@@ -15,7 +14,6 @@ export async function GET() {
           COUNT(*) FILTER (WHERE status = 'completed') as completed_projects
         FROM projects
       `;
-
       // Get tasks statistics
       const tasksStats = await sql`
         SELECT 
@@ -24,19 +22,16 @@ export async function GET() {
           COUNT(*) FILTER (WHERE status = 'in-progress') as in_progress_tasks
         FROM tasks
       `;
-
       // Get team members count
       const teamStats = await sql`
         SELECT COUNT(*) as total_members
         FROM team_members
       `;
-
       // Calculate total hours from timesheet
       const hoursStats = await sql`
         SELECT COALESCE(SUM(hours), 0) as total_hours
         FROM timesheet
       `;
-
       // Get active projects (limited to 5)
       const activeProjects = await sql`
         SELECT id 
@@ -44,9 +39,7 @@ export async function GET() {
         WHERE status = 'in-progress'
         LIMIT 5
       `;
-
       await sql`COMMIT`;
-
       // Prepare the dashboard data
       const dashboardData = {
         stats: {
@@ -99,9 +92,7 @@ export async function GET() {
         ],
         activeProjects: activeProjects.rows.map(row => row.id)
       };
-
       return NextResponse.json(dashboardData);
-
     } catch (error) {
       await sql`ROLLBACK`;
       throw error;
