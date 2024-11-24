@@ -206,5 +206,6 @@ export { fetchTasks, createTaskAsync, updateTaskAsync, deleteTaskAsync };
 export const selectAllTasks = (state: RootState) => (state.tasks as TasksState).items;
 export const selectTasksStatus = (state: RootState) => state.tasks.status;
 export const selectTasksError = (state: RootState) => state.tasks.error;
+export const selectOverdueTasks = (state: RootState) => state.tasks.stats.overdue;
 
 export default tasksSlice.reducer;

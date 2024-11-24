@@ -18,18 +18,20 @@ import {
 import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
 
 export default function DashboardPage() {
+
   const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+    dispatch(fetchTimesheetEntries({}));
+    dispatch(fetchProjects());
+  }, [dispatch]);
+
   const stats = useAppSelector(selectDashboardStats);
   const timeDistribution = useAppSelector(selectTimeDistribution);
   const activities = useAppSelector(selectActivities);
   const activeProjects = useAppSelector(selectActiveProjectIds);
   const timesheetSummary = useAppSelector(selectTimesheetSummary);
 
-  useEffect(() => {
-    dispatch(fetchDashboardData());
-    dispatch(fetchTimesheetEntries({}));
-    dispatch(fetchProjects());
-  }, [dispatch]);
 
   const sampleData = [
     { name: 'Development', value: 40 },
@@ -80,7 +82,7 @@ export default function DashboardPage() {
         <div className="flex items-center space-x-6">
           {/* Time Distribution */}
           <div className="w-1/2">
-            <TimeDistribution data={sampleData} />
+            <TimeDistribution data={timeDistribution} />
           </div>
 
           {/* Active Projects */}

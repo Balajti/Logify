@@ -10,33 +10,40 @@ import {
   Users 
 } from 'lucide-react';
 
-export function ProjectMetrics() {
+interface Metric {
+    totalHours: number;
+    completed: number;
+    activeProjects: number;
+    overdueTasks: number;
+}
+
+export function ProjectMetrics({totalHours, completed, activeProjects, overdueTasks}: Metric) {
   const metrics = [
     {
       title: 'Total Hours Logged',
-      value: '164.2',
-      change: '+12.3%',
+      value: totalHours,
+      change: '0%',
       isPositive: true,
       icon: Clock,
     },
     {
       title: 'Tasks Completed',
-      value: '48',
-      change: '+8.2%',
-      isPositive: true,
+      value: completed,
+      change: '0%',
+      isPositive: false,
       icon: CheckSquare,
     },
     {
       title: 'Active Projects',
-      value: '12',
-      change: '+15.1%',
+      value: activeProjects,
+      change: '0%',
       isPositive: true,
       icon: Users,
     },
     {
       title: 'Overdue Tasks',
-      value: '3',
-      change: '-5.1%',
+      value: overdueTasks,
+      change: '0%',
       isPositive: true,
       icon: AlertTriangle,
     },

@@ -11,6 +11,8 @@ export interface TimesheetEntry {
   hours: number;
   description: string;
   created_at: string;
+  task_title?: string;
+  project_name?: string;
 }
 
 interface TimesheetSummary {
@@ -38,6 +40,7 @@ interface TimesheetState {
   };
   summary: TimesheetSummary;
   selectedEntry: TimesheetEntry | null;
+  selectedEmployee: number | null;
 }
 
 const initialState: TimesheetState = {
@@ -59,6 +62,7 @@ const initialState: TimesheetState = {
     projectDistribution: [],
   },
   selectedEntry: null,
+  selectedEmployee: null,
 };
 
 // Calculate timesheet summary
@@ -107,7 +111,7 @@ const calculateTimesheetSummary = (entries: TimesheetEntry[]): TimesheetSummary 
 // Async Thunks
 export const fetchTimesheetEntries = createAsyncThunk(
   'timesheet/fetchEntries',
-  async (filters: Partial<TimesheetState['filters']>, { rejectWithValue }) => {
+  async (filters: { team_member_id?: number }, { rejectWithValue }) => {
     try {
       const response = await timesheetApi.getFiltered(filters);
       return response.data;
@@ -169,6 +173,9 @@ const timesheetSlice = createSlice({
     updateSummary: (state) => {
       state.summary = calculateTimesheetSummary(state.entries);
     },
+    setSelectedEmployee(state, action: PayloadAction<number>) {
+      state.selectedEmployee = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -215,6 +222,7 @@ export const {
   clearTimesheetFilters,
   selectEntry,
   updateSummary,
+  setSelectedEmployee,
 } = timesheetSlice.actions;
 
 // Export reducer
@@ -239,8 +247,12 @@ export const selectTimesheetSummary = (state: { timesheet: TimesheetState }) =>
 export const selectSelectedEntry = (state: { timesheet: TimesheetState }) =>
   state.timesheet.selectedEntry;
 
+export const selectSelectedEmployee = (state: { timesheet: TimesheetState }) => 
+  state.timesheet.selectedEmployee;
+
 export const selectFilteredEntries = (state: { timesheet: TimesheetState }) => {
   const { entries, filters } = state.timesheet;
+
   
   return entries.filter(entry => {
     if (filters.team_member_id && entry.team_member_id !== filters.team_member_id) return false;

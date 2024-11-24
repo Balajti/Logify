@@ -33,7 +33,6 @@ export function TaskList() {
     dispatch(fetchTeamMembers());
   }, [dispatch]);
   const users = useAppSelector(selectAllTeamMembers);
-  console.log(users);
 
   const { items: tasks, filters } = useAppSelector((state) => state.tasks);
   const [editingTask, setEditingTask] = useState<Tasks | null>(null);

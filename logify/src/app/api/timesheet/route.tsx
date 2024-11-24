@@ -18,7 +18,7 @@ interface TimesheetRow {
 
 const createTimesheetSchema = z.object({
   team_member_id: z.number(),
-  date: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format, should be YYYY-MM-DD'),
   hours: z.number().min(0),
   description: z.string().optional(),
   project_id: z.number(),

@@ -10,8 +10,6 @@ interface TimeDistributionProps {
 }
 
 export function TimeDistribution({ data }: TimeDistributionProps) {
-  console.log('Rendering with data:', data);
-  
   return (
     <div className="w-full min-h-[400px] border rounded-lg p-4">
       <h2 className="text-xl font-bold mb-4">Time Distribution</h2>

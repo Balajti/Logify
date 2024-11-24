@@ -71,6 +71,7 @@ interface ProjectsState {
   timeDistribution: TimeDistributionData[];
   activities: Activity[];
   activeProjects: number[];
+  overdueTasks: number;
 }
 
 
@@ -102,23 +103,69 @@ export const fetchDashboardData = createAsyncThunk(
     const teamMembers = teamResponse.data;
 
     // Calculate total hours from timesheet entries
-    const totalHours = timesheetEntries.reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0);
+    const totalHours = Math.round(
+      timesheetEntries.reduce((sum: number, entry: TimesheetEntry) => {
+        const hours = Number(entry.hours) || 0;
+        return sum + hours;
+      }, 0)
+    );
 
     // Calculate completed tasks
     const completedTasks = tasks.filter((task: { status: string }) => task.status === 'completed').length;
 
     // Calculate active projects
     const activeProjects = projects.filter((project: Project) => project.status === 'in-progress').length;
+    const overdueTasks = projects.filter((project: Project) => project.status === 'not-started').length;
 
     // Calculate team members
     const teamMembersCount = teamMembers.length;
 
     // Calculate time distribution
     const timeDistribution = [
-      { name: 'Development', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Development')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
-      { name: 'Meetings', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Meeting')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
-      { name: 'Planning', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Planning')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
-      { name: 'Research', value: timesheetEntries.filter((entry: TimesheetEntry) => entry.description.includes('Research')).reduce((sum: number, entry: TimesheetEntry) => sum + entry.hours, 0) },
+      {
+        name: 'Development',
+        value: Math.round(
+          timesheetEntries
+            .filter((entry: TimesheetEntry) => entry.description.includes('Development'))
+            .reduce((sum: number, entry: TimesheetEntry) => {
+              const hours = Number(entry.hours) || 0;
+              return sum + hours;
+            }, 0)
+        ),
+      },
+      {
+        name: 'Meetings',
+        value: Math.round(
+          timesheetEntries
+            .filter((entry: TimesheetEntry) => entry.description.includes('Meeting'))
+            .reduce((sum: number, entry: TimesheetEntry) => {
+              const hours = Number(entry.hours) || 0;
+              return sum + hours;
+            }, 0)
+        ),
+      },
+      {
+        name: 'Planning',
+        value: Math.round(
+          timesheetEntries
+            .filter((entry: TimesheetEntry) => entry.description.includes('Planning'))
+            .reduce((sum: number, entry: TimesheetEntry) => {
+              const hours = Number(entry.hours) || 0;
+              return sum + hours;
+            }, 0)
+        ),
+      },
+      {
+        name: 'Research',
+        value: Math.round(
+          timesheetEntries
+            .filter((entry: TimesheetEntry) => entry.description.includes('Research'))
+            .reduce((sum: number, entry: TimesheetEntry) => {
+              const hours = Number(entry.hours) || 0;
+              return sum + hours;
+            }, 0)
+        ),
+      },
     ];
 
     return {
@@ -143,6 +190,7 @@ export const fetchDashboardData = createAsyncThunk(
       timeDistribution,
       activities: [], // Add logic to fetch activities if needed
       activeProjects: projects.filter((project: Project) => project.status === 'in-progress').map((project: Project) => project.id),
+      overdueTasks: overdueTasks,
     };
   }
 );
@@ -189,6 +237,7 @@ const initialState: ProjectsState = {
   timeDistribution: [],
   activities: [],
   activeProjects: [],
+  overdueTasks: 0,
 };
 
 const projectsSlice = createSlice({

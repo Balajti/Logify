@@ -29,7 +29,6 @@ export default function ProjectsPage() {
   const { data: session } = useSession();
   const dispatch = useAppDispatch();
   const projectsRedux = useAppSelector(state => state.projects.items);
-  console.log(projectsRedux);
   useEffect(() => {
     if (session) {
       dispatch(fetchProjects());
