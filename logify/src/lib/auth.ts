@@ -15,8 +15,8 @@ const users: ExtendedUser[] = [
     role: "admin",
   },
   {
-    id: 2,
-    name: "Demo Employee",
+    id: 4,
+    name: "Sarah Williams",
     email: "employee@logify.com",
     role: "employee",
   },

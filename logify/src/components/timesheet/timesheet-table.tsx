@@ -68,7 +68,7 @@ export function TimesheetTable({
   startDate, 
   entries,
   employeeId,
-  isAdminView,
+  isAdminView = true,
 }: TimesheetTableProps) {
   // Hooks
   const dispatch = useAppDispatch();

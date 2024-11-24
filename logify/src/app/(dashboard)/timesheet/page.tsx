@@ -11,7 +11,7 @@ import { fetchTimesheetEntries, selectAllTimesheetEntries, selectTimesheetStatus
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 
 export default function TimesheetPage() {
-  const { isAdmin } = useAuthorization();
+  const { isAdmin, userId } = useAuthorization();
   const dispatch = useAppDispatch();
   const timesheetEntries = useAppSelector(selectAllTimesheetEntries);
   const status = useAppSelector(selectTimesheetStatus);
@@ -32,9 +32,9 @@ export default function TimesheetPage() {
     if (isAdmin) {
       dispatch(fetchTimesheetEntries({}));
     } else {
-      // Fetch timesheet entries for the logged-in employee
-      const employeeId = 1; // Replace with actual employee ID
-      dispatch(fetchTimesheetEntries({ team_member_id: employeeId }));
+      
+      const employeeId = 1;
+      dispatch(fetchTimesheetEntries({ team_member_id: userId }));
     }
   }, [dispatch, isAdmin]);
 
@@ -59,7 +59,7 @@ export default function TimesheetPage() {
               onPrevious={handlePreviousWeek}
               onNext={handleNextWeek}
             />
-            <TimesheetTable startDate={weekStart} entries={timesheetEntries} />
+            <TimesheetTable startDate={weekStart} entries={timesheetEntries} employeeId={userId} />
           </>
         )}
       </div>

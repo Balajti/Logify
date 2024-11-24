@@ -9,11 +9,13 @@ import { TeamFilters } from '@/components/team/team-filters';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { fetchTeamMembers, selectAllTeamMembers, selectTeamStatus } from '@/lib/redux/features/team/teamSlice';
 import { Plus } from 'lucide-react';
+import { useAuthorization } from '@/hooks/use-authorization';
 
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const teamMembers = useAppSelector(selectAllTeamMembers);
   const status = useAppSelector(selectTeamStatus);
+  const { isAdmin } = useAuthorization();
 
   useEffect(() => {
     dispatch(fetchTeamMembers());
@@ -33,10 +35,14 @@ export default function TeamPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Team</h1>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Member
-          </Button>
+          {
+            isAdmin && (
+              <Button >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Member
+              </Button>
+            )
+          }
         </div>
         <TeamFilters />
         <TeamList teamMembers={teamMembers} />
