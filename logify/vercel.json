@@ -11,5 +11,14 @@
     "silent": true,
     "autoAlias": true
   },
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet ./"
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet ./",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node"
+    }
+  ],
+  "hooks": {
+    "build": "npm run test && npm run build"
+  }
 }
