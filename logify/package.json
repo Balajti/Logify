@@ -9,7 +9,7 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push:pg",
-    "test": "jest --config jest.config.ts",
+    "test": "node --loader ts-node/esm node_modules/jest/bin/jest.js",
     "test:ci": "jest --ci"
   },
   "dependencies": {
