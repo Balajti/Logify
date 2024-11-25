@@ -9,12 +9,13 @@
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push:pg",
-    "test": "jest",
+    "test": "jest --config jest.config.ts",
     "test:ci": "jest --ci"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",
     "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.25.9",
     "@hookform/resolvers": "^3.9.0",
     "@neondatabase/serverless": "^0.10.3",
     "@radix-ui/react-accordion": "^1.2.1",
