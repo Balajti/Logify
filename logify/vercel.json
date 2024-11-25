@@ -11,11 +11,5 @@
     "silent": true,
     "autoAlias": true
   },
-  "ignoreCommand": "git diff HEAD^ HEAD --quiet ./",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/node"
-    }
-  ]
+  "ignoreCommand": "git diff HEAD^ HEAD --quiet ./"
 }
