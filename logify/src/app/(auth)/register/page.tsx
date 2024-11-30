@@ -44,14 +44,20 @@ export default function RegisterPage() {
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     try {
-      console.log(values);
       setIsLoading(true);
       setError('');
       
-      // For demo purposes, just redirect to login
-      // In a real app, you would make an API call to register the user
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Registration failed');
+      }
+  
       router.push('/login?registered=true');
-      
     } catch (error) {
       console.error(error);
       setError('An error occurred during registration');
@@ -59,6 +65,7 @@ export default function RegisterPage() {
       setIsLoading(false);
     }
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

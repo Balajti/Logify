@@ -1,21 +1,23 @@
-// logify/src/app/(dashboard)/team/page.tsx
 'use client';
 
 import { useEffect } from 'react';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
-import { Button } from '@/components/ui/button';
 import { TeamList } from '@/components/projects/team-list';
 import { TeamFilters } from '@/components/team/team-filters';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { fetchTeamMembers, selectAllTeamMembers, selectTeamStatus } from '@/lib/redux/features/team/teamSlice';
-import { Plus } from 'lucide-react';
 import { useAuthorization } from '@/hooks/use-authorization';
+import { AddMemberDialog } from '@/components/team/add-member-dialog';
 
 export default function TeamPage() {
   const dispatch = useAppDispatch();
   const teamMembers = useAppSelector(selectAllTeamMembers);
   const status = useAppSelector(selectTeamStatus);
   const { isAdmin } = useAuthorization();
+
+  const handleMemberAdded = () => {
+    dispatch(fetchTeamMembers());
+  };
 
   useEffect(() => {
     dispatch(fetchTeamMembers());
@@ -29,20 +31,12 @@ export default function TeamPage() {
     return <div>Failed to load team members</div>;
   }
 
-
   return (
     <DashboardWrapper>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Team</h1>
-          {
-            isAdmin && (
-              <Button >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Member
-              </Button>
-            )
-          }
+          {isAdmin && <AddMemberDialog onMemberAdded={handleMemberAdded} />}
         </div>
         <TeamFilters />
         <TeamList teamMembers={teamMembers} />

@@ -1,72 +1,73 @@
 import { NextAuthOptions } from "next-auth";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import { db } from "@/lib/db";
 import CredentialsProvider from "next-auth/providers/credentials";
-import type { User } from "next-auth";
-import type { UserRole } from "@/lib/types/auth";
-
-interface ExtendedUser extends User {
-  role: UserRole;
-}
-
-const users: ExtendedUser[] = [
-  {
-    id: 1,
-    name: "Admin User",
-    email: "demo@logify.com",
-    role: "admin",
-  },
-  {
-    id: 4,
-    name: "Sarah Williams",
-    email: "employee@logify.com",
-    role: "employee",
-  },
-];
+import GoogleProvider from "next-auth/providers/google";
+import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { users } from "@/lib/db/schema";
 
 export const authOptions: NextAuthOptions = {
+  adapter: DrizzleAdapter(db) as any, // Type casting to avoid adapter compatibility issues
+  session: {
+    strategy: "jwt"
+  },
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials): Promise<User | null> {
-        console.log('Auth attempt:', {
-          email: credentials?.email,
-          passwordProvided: !!credentials?.password
-        });
-        
-        if (!credentials?.email || !credentials?.password) {
-          console.log('Missing credentials');
-          return null;
-        }
-      
-        const validCombinations = [
-          { email: "demo@logify.com", password: "demo123" },
-          { email: "employee@logify.com", password: "demo123" }
-        ];
-      
-        const isValid = validCombinations.some(
-          combo => combo.email === credentials.email && combo.password === credentials.password
-        );
-      
-        console.log('Auth result:', { isValid });
-      
-        if (isValid) {
-          const user = users.find(user => user.email === credentials.email);
-          console.log('Found user:', user);
-          return user ?? null;
-        }
-      
-        return null;
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          role: "user" // Default role for Google sign-ins
+        };
       }
     }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const user = await db.query.users.findFirst({
+          where: eq(users.email, credentials.email)
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const passwordMatch = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!passwordMatch) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        } as any;
+      }
+    })
   ],
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as ExtendedUser).role;
-        token.id = Number(user.id);
+        token.role = user.role;
+        token.id = user.id;
       }
       return token;
     },
@@ -76,14 +77,76 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
       }
       return session;
-    },
+    }
   },
   pages: {
-    signIn: '/login',
-    error: '/login',
-  },
-  session: {
-    strategy: "jwt",
+    signIn: "/login",
+    error: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
-}satisfies NextAuthOptions;
+};
+
+export async function hashPassword(password: string): Promise<string> {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+}
+
+export function generatePassword(): string {
+  // Define character sets
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const numbers = '0123456789';
+  const symbols = '!@#$%^&*';
+  
+  // Password requirements
+  const length = 12;
+  const minLowercase = 2;
+  const minUppercase = 2;
+  const minNumbers = 2;
+  const minSymbols = 1;
+
+  let password = '';
+
+  // Add minimum required characters
+  for (let i = 0; i < minLowercase; i++) {
+    password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+  }
+  for (let i = 0; i < minUppercase; i++) {
+    password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+  }
+  for (let i = 0; i < minNumbers; i++) {
+    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+  }
+  for (let i = 0; i < minSymbols; i++) {
+    password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+  }
+
+  // Fill remaining length with random characters from all sets
+  const allChars = lowercase + uppercase + numbers + symbols;
+  const remainingLength = length - password.length;
+  for (let i = 0; i < remainingLength; i++) {
+    password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+  }
+
+  // Shuffle the password
+  return password
+    .split('')
+    .sort(() => Math.random() - 0.5)
+    .join('');
+}
+
+// Optional: Add a function to verify password complexity
+export function verifyPasswordStrength(password: string): boolean {
+  const hasLowercase = /[a-z]/.test(password);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSymbol = /[!@#$%^&*]/.test(password);
+  const isLongEnough = password.length >= 8;
+
+  return hasLowercase && hasUppercase && hasNumber && hasSymbol && isLongEnough;
+}
+
+// Optional: Add a function to compare passwords
+export async function comparePasswords(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  return bcrypt.compare(plainPassword, hashedPassword);
+}
