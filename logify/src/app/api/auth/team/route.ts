@@ -4,6 +4,7 @@ import { users } from "@/lib/db/schema";
 import { createId } from '@paralleldrive/cuid2';
 import { hashPassword, generatePassword } from "@/lib/auth";
 import { z } from "zod";
+import { sendWelcomeEmail } from "@/lib/email";
 
 const teamMemberSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,10 +35,18 @@ export async function POST(request: Request) {
       });
     });
 
+    // Send welcome email
+    const emailSent = await sendWelcomeEmail(
+      body.email,
+      body.name,
+      password
+    );
+
     return NextResponse.json({ 
       id: userId,
       ...body,
-      temporaryPassword: password // Only sent in response, not stored
+      temporaryPassword: password,
+      emailSent
     }, { status: 201 });
     
   } catch (error) {
