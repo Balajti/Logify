@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useAppSelector } from '@/lib/redux/hooks';
 import { selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
-import type { Project } from '@/lib/redux/features/projects/projectsSlice';
+import type { Project } from '@/lib/redux/features/projects/types';
 
 interface ActiveProjectsProps {
   projectIds: number[];

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
-import { Project } from '@/lib/redux/features/projects/projectsSlice';
+import { Project } from '@/lib/redux/features/projects/types';
 
 const ProjectFormValues: Omit<Project, 'id'> = {
   name: '',
@@ -15,7 +15,9 @@ const ProjectFormValues: Omit<Project, 'id'> = {
   dueDate: '',
   progress: 0,
   team: [],
-  task: { total: 0, completed: 0 },
+  task_total: 0,
+  task_completed: 0,
+  admin_id: '',
   tasks: [],
 };
 

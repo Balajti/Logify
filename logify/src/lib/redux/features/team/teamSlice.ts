@@ -1,54 +1,139 @@
-// app/lib/features/team/teamSlice.ts
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { teamApi } from '@/lib/services/api';
+import type { RootState } from '@/lib/redux/store';
+import type { 
+  TeamMember, 
+  TeamState, 
+  TeamStats,
+  CreateTeamMemberDTO,
+  UpdateTeamMemberDTO
+} from './types';
 
-export interface TeamMember {
-  id: number;
-  name: string;
-  role: string;
-  department: string;
-  email: string;
-  phone: string;
-  avatar?: string;
-  status: 'active' | 'away' | 'offline';
-  projects: number[];
-  tasks: number[];
+const calculateTeamStats = (members: TeamMember[]): TeamStats => {
+  const departmentDistribution: Record<string, number> = {};
+  let totalWorkload = 0;
+
+  members.forEach(member => {
+    if (member.department) {
+      departmentDistribution[member.department] = 
+        (departmentDistribution[member.department] || 0) + 1;
+    }
+    totalWorkload += member.workload.assigned;
+  });
+
+  const topPerformers = members
+    .map(member => ({
+      id: member.id,
+      score: (member.performance.tasksCompleted * 0.4) + 
+             ((member.performance.onTime) / Math.max(1, member.performance.tasksCompleted) * 0.6)
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .map(performer => performer.id);
+
+  return {
+    totalMembers: members.length,
+    activeMembers: members.filter(m => m.status === 'active').length,
+    departmentDistribution,
+    averageWorkload: members.length ? totalWorkload / members.length : 0,
+    topPerformers,
+  };
+};
+
+const transformMember = (data: any): TeamMember => ({
+  id: data.id,
+  admin_id: data.admin_id,
+  name: data.name,
+  role: data.role || '',
+  department: data.department || '',
+  email: data.email,
+  phone: data.phone || '',
+  avatar: data.avatar,
+  status: data.status || 'offline',
+  user_id: data.user_id,
+  projects: data.projects || [],
+  tasks: data.tasks || [],
   workload: {
-    assigned: number;
-    completed: number;
-  };
+    assigned: data.workload?.assigned || 0,
+    completed: data.workload?.completed || 0,
+  },
   performance: {
-    tasksCompleted: number;
-    onTime: number;
-    overdue: number;
-  };
-  availability: number; // percentage of availability
-}
+    tasksCompleted: data.performance?.tasksCompleted || 0,
+    onTime: data.performance?.onTime || 0,
+    overdue: data.performance?.overdue || 0,
+  },
+  availability: data.availability || 0,
+});
 
-interface TeamStats {
-  totalMembers: number;
-  activeMembers: number;
-  departmentDistribution: {
-    [key: string]: number;
-  };
-  averageWorkload: number;
-  topPerformers: number[];
-}
+// Async Thunks
+export const fetchTeamMembers = createAsyncThunk(
+  'team/fetchMembers',
+  async (_, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const session = state.auth.session;
 
-interface TeamState {
-  members: TeamMember[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  error: string | null;
-  filters: {
-    department: string[];
-    status: string[];
-    search: string;
-    availability: number | null;
-    project: number | null;
-  };
-  stats: TeamStats;
-  selectedMember: number | null;
-}
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await teamApi.getAll({
+        admin_id: session.user.admin_id || session.user.id
+      });
+      
+      return response.data.map(transformMember);
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to fetch team members');
+    }
+  }
+);
+
+export const createTeamMember = createAsyncThunk(
+  'team/createMember',
+  async (memberData: CreateTeamMemberDTO, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as RootState;
+      const session = state.auth.session;
+
+      if (!session?.user) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await teamApi.create(memberData);
+      return transformMember(response.data);
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to create team member');
+    }
+  }
+);
+
+export const updateTeamMember = createAsyncThunk(
+  'team/updateMember',
+  async ({ id, data }: { id: number; data: UpdateTeamMemberDTO }, { rejectWithValue }) => {
+    try {
+      const response = await teamApi.update(id, data);
+      return transformMember(response.data);
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to update team member');
+    }
+  }
+);
+
+export const deleteTeamMember = createAsyncThunk(
+  'team/deleteMember',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await teamApi.delete(id);
+      return id;
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to delete team member');
+    }
+  }
+);
 
 const initialState: TeamState = {
   members: [],
@@ -70,98 +155,6 @@ const initialState: TeamState = {
   },
   selectedMember: null,
 };
-
-// Calculate team statistics
-const calculateTeamStats = (members: TeamMember[]): TeamStats => {
-  const departmentDistribution: { [key: string]: number } = {};
-  let totalWorkload = 0;
-
-  members.forEach(member => {
-    // Update department distribution
-    departmentDistribution[member.department] = 
-      (departmentDistribution[member.department] || 0) + 1;
-    
-    // Safely add to total workload
-    totalWorkload += member.workload?.assigned || 0; // Add null check here
-  });
-
-  // Calculate top performers based on completion rate and on-time delivery
-  const topPerformers = members
-    .map(member => ({
-      id: member.id,
-      score: ((member.performance?.tasksCompleted || 0) * 0.4) + 
-             ((member.performance?.onTime || 0) / Math.max(1, member.performance?.tasksCompleted || 1) * 0.6)
-    }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5)
-    .map(performer => performer.id);
-
-  return {
-    totalMembers: members.length,
-    activeMembers: members.filter(m => m.status === 'active').length,
-    departmentDistribution,
-    averageWorkload: members.length ? totalWorkload / members.length : 0,
-    topPerformers,
-  };
-};
-
-// Async Thunks
-export const fetchTeamMembers = createAsyncThunk(
-  'team/fetchMembers',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await teamApi.getAll();
-      // Transform the data to ensure it matches the interface
-      const transformedData = response.data.map((member: any) => ({
-        ...member,
-        workload: member.workload || { assigned: 0, completed: 0 },
-        performance: member.performance || { tasksCompleted: 0, onTime: 0, overdue: 0 },
-        availability: member.availability || 0,
-        projects: member.projects || [],
-        tasks: member.tasks || [],
-      }));
-      return transformedData;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch team members');
-    }
-  }
-);
-
-export const createTeamMember = createAsyncThunk(
-  'team/createMember',
-  async (memberData: Omit<TeamMember, 'id'>, { rejectWithValue }) => {
-    try {
-      const response = await teamApi.create(memberData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to create team member');
-    }
-  }
-);
-
-export const updateTeamMember = createAsyncThunk(
-  'team/updateMember',
-  async ({ id, data }: { id: number; data: Partial<TeamMember> }, { rejectWithValue }) => {
-    try {
-      const response = await teamApi.update(id, data);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to update team member');
-    }
-  }
-);
-
-export const deleteTeamMember = createAsyncThunk(
-  'team/deleteMember',
-  async (id: number, { rejectWithValue }) => {
-    try {
-      await teamApi.delete(id);
-      return id;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to delete team member');
-    }
-  }
-);
 
 const teamSlice = createSlice({
   name: 'team',
@@ -198,7 +191,6 @@ const teamSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch team members
       .addCase(fetchTeamMembers.pending, (state) => {
         state.status = 'loading';
       })
@@ -211,12 +203,10 @@ const teamSlice = createSlice({
         state.status = 'failed';
         state.error = action.payload as string;
       })
-      // Create team member
       .addCase(createTeamMember.fulfilled, (state, action) => {
         state.members.push(action.payload);
         state.stats = calculateTeamStats(state.members);
       })
-      // Update team member
       .addCase(updateTeamMember.fulfilled, (state, action) => {
         const index = state.members.findIndex(m => m.id === action.payload.id);
         if (index !== -1) {
@@ -224,7 +214,6 @@ const teamSlice = createSlice({
           state.stats = calculateTeamStats(state.members);
         }
       })
-      // Delete team member
       .addCase(deleteTeamMember.fulfilled, (state, action) => {
         state.members = state.members.filter(m => m.id !== action.payload);
         state.stats = calculateTeamStats(state.members);
@@ -235,7 +224,6 @@ const teamSlice = createSlice({
   },
 });
 
-// Export actions
 export const {
   setTeamFilters,
   clearTeamFilters,
@@ -245,19 +233,16 @@ export const {
   removeFromProject,
 } = teamSlice.actions;
 
-// Export reducer
-export default teamSlice.reducer;
-
 // Selectors
-export const selectAllTeamMembers = (state: { team: TeamState }) => state.team.members;
-export const selectTeamStatus = (state: { team: TeamState }) => state.team.status;
-export const selectTeamError = (state: { team: TeamState }) => state.team.error;
-export const selectTeamFilters = (state: { team: TeamState }) => state.team.filters;
-export const selectTeamStats = (state: { team: TeamState }) => state.team.stats;
-export const selectSelectedMember = (state: { team: TeamState }) => 
+export const selectAllTeamMembers = (state: RootState) => state.team.members;
+export const selectTeamStatus = (state: RootState) => state.team.status;
+export const selectTeamError = (state: RootState) => state.team.error;
+export const selectTeamFilters = (state: RootState) => state.team.filters;
+export const selectTeamStats = (state: RootState) => state.team.stats;
+export const selectSelectedMember = (state: RootState) => 
   state.team.members.find(m => m.id === state.team.selectedMember);
 
-export const selectFilteredTeamMembers = (state: { team: TeamState }) => {
+export const selectFilteredTeamMembers = (state: RootState) => {
   const { members, filters } = state.team;
   
   return members.filter(member => {
@@ -277,8 +262,10 @@ export const selectFilteredTeamMembers = (state: { team: TeamState }) => {
   });
 };
 
-export const selectTeamMembersByProject = (state: { team: TeamState }, projectId: number) =>
+export const selectTeamMembersByProject = (state: RootState, projectId: number) =>
   state.team.members.filter(member => member.projects.includes(projectId));
 
-export const selectAvailableMembers = (state: { team: TeamState }) =>
+export const selectAvailableMembers = (state: RootState) =>
   state.team.members.filter(member => member.availability >= 20);
+
+export default teamSlice.reducer;

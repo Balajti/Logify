@@ -65,7 +65,7 @@ export default function ProjectDetailsPage() {
             <CardContent className="p-6 flex flex-col items-center">
               <CheckSquare className="h-8 w-8 text-green-500 mb-2" />
               <p className="text-sm text-gray-500">Tasks</p>
-              <p className="text-2xl font-bold">{project.task.completed}/{project.task.total}</p>
+              <p className="text-2xl font-bold">{project.task_completed}/{project.task_total}</p>
             </CardContent>
           </Card>
           <Card>

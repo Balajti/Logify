@@ -3,6 +3,7 @@ import tasksReducer from './features/tasks/tasksSlice';
 import teamReducer from './features/team/teamSlice';
 import projectsReducer from './features/projects/projectsSlice';
 import timesheetReducer from './features/timesheet/timesheetSlice';
+import authReducer from './features/auth/authSlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     team: teamReducer,
     projects: projectsReducer,
     timesheet: timesheetReducer,
+    auth: authReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

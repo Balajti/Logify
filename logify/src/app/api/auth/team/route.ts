@@ -1,21 +1,28 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { team_members, users } from "@/lib/db/schema";
 import { createId } from '@paralleldrive/cuid2';
-import { hashPassword, generatePassword } from "@/lib/auth";
+import { hashPassword, generatePassword, authOptions } from "@/lib/auth";
 import { z } from "zod";
 import { sendWelcomeEmail } from "@/lib/email";
+import { getServerSession } from "next-auth";
 
 const teamMemberSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
-  department: z.string().optional(),
+  department: z.string(),
+  role: z.string(),
   phone: z.string().optional(),
+  avatar: z.string().optional(),
   status: z.enum(['active', 'away', 'offline']).default('active'),
 });
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const json = await request.json();
     const body = teamMemberSchema.parse(json);
     
@@ -32,8 +39,19 @@ export async function POST(request: Request) {
         email: body.email,
         password: hashedPassword,
         role: "user",
+        adminId: session.user.id,
       });
+        await tx.insert(team_members).values({
+          name: body.name,
+          email: body.email,
+          department: body.department || '',
+          status: body.status,
+          userId: userId,
+          adminId: session.user.id,
+          role: ''
+        });
     });
+
 
     // Send welcome email
     const emailSent = await sendWelcomeEmail(

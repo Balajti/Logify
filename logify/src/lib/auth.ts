@@ -68,6 +68,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.admin_id = user.admin_id;
       }
       return token;
     },
@@ -75,6 +76,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.role = token.role;
         session.user.id = token.id;
+        session.user.admin_id = token.admin_id;
       }
       return session;
     }
@@ -130,7 +132,7 @@ export function generatePassword(): string {
 
   // Shuffle the password
   return password
-    .split('')
+    .split('')  
     .sort(() => Math.random() - 0.5)
     .join('');
 }

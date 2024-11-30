@@ -22,14 +22,14 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Save } from 'lucide-react';
 import { SubmitTimesheetDialog } from './submit-timesheet-dialog';
 import { 
-  TimesheetEntry,
   createTimesheetEntry,
   updateTimesheetEntry,
   deleteTimesheetEntry 
 } from '@/lib/redux/features/timesheet/timesheetSlice';
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
-import { selectAllProjects, Project } from '@/lib/redux/features/projects/projectsSlice';
-import { selectAllTasks, Task } from '@/lib/redux/features/tasks/tasksSlice';
+import { selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
+import { selectAllTasks } from '@/lib/redux/features/tasks/tasksSlice';
+import { TimesheetEntry } from '@/lib/redux/features/timesheet/types';
 
 // Interfaces
 interface TimesheetTableProps {
@@ -46,10 +46,11 @@ interface TimesheetEntryForPage {
   task_id: number;
   date: string;
   hours: number;
-  description: string;
+  description?: string;
   created_at: string;
   project_name?: string;
   task_title?: string;
+  updated_at?: string;
 }
 
 interface TimesheetDates {
@@ -88,6 +89,8 @@ export function TimesheetTable({
   useEffect(() => {
     const entriesWithNames = entries.map(entry => ({
       ...entry,
+      created_at: entry.created_at || '',
+      updated_at: entry.updated_at || ''
     }));
     setLocalEntries(entriesWithNames.filter(entry => weekDays.find(day => format(day, 'yyyy-MM-dd') === entry.date.split("T")[0])));
     //setLocalEntries(entriesWithNames);
@@ -221,13 +224,14 @@ export function TimesheetTable({
   const addNewEntry = async (date: string) => {
     if (!employeeId) return;
 
-    const newEntry: Omit<TimesheetEntry, 'id' | 'created_at'> = {
+    const newEntry: Omit<TimesheetEntry, 'id' | 'created_at' > = {
       team_member_id: Number(employeeId),
       project_id: 0,
       task_id: 0,
       date,
       hours: 0,
-      description: ''
+      description: '',
+      admin_id: '',
     };
 
     await dispatch(createTimesheetEntry(newEntry));

@@ -3,13 +3,11 @@ import type { RootState, AppDispatch } from './store';
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-
-// app/lib/services/api.ts
 import axios from 'axios';
-import { Project } from './features/projects/projectsSlice';
-import { Task } from './features/tasks/tasksSlice';
-import { TeamMember } from './features/team/teamSlice';
-import { TimesheetEntry } from './features/timesheet/timesheetSlice';
+import { Task } from './features/tasks/types';
+import { TeamMember } from './features/team/types';
+import { Project } from './features/projects/types';
+import { TimesheetEntry } from './features/timesheet/types';
 
 const api = axios.create({
   baseURL: '/api',

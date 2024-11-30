@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { Project } from "@/lib/redux/features/projects/projectsSlice";
+import type { Project } from "@/lib/redux/features/projects/types";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from '@/lib/redux/hooks';
 import { selectAllTeamMembers } from '@/lib/redux/features/team/teamSlice';
@@ -73,7 +73,7 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
             })}
           </div>
           <div className="flex justify-between text-sm text-gray-500">
-            <span>Tasks: {project.task?.completed ?? 0}/{project.task?.total ?? 0}</span>
+            <span>Tasks: {project.task_completed ?? 0}/{project.task_total ?? 0}</span>
             <span>Due: {project.dueDate}</span>
           </div>
         </div>

@@ -1,22 +1,10 @@
 import axios, { AxiosError } from 'axios';
-import type { 
-  Project, 
-  Task, 
-  TeamMember, 
-  TimesheetEntry,
-  CreateDTO,
-  UpdateDTO
-} from './types';
+import type { Project, Task, TeamMember, TimesheetEntry } from './types';
 
 interface ApiError {
   error: string;
   details?: any;
 }
-
-type QueryParams = {
-  admin_id?: string;
-  [key: string]: any;
-};
 
 const api = axios.create({
   baseURL: '/api',
@@ -25,6 +13,7 @@ const api = axios.create({
   },
 });
 
+// Error handling interceptor
 api.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ApiError>) => {
@@ -32,6 +21,11 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// Generic types for common patterns
+type CreateDTO<T> = Omit<T, 'id' | 'admin_id' | 'created_at' | 'updated_at'>;
+type UpdateDTO<T> = Partial<CreateDTO<T>>;
+type QueryParams = { admin_id?: string } & Record<string, any>;
 
 export const projectsApi = {
   getAll: (params?: QueryParams) => 
@@ -47,7 +41,7 @@ export const projectsApi = {
     api.patch<Project>(`/projects/${id}`, data),
     
   delete: (id: number) => 
-    api.delete(`/projects/${id}`),
+    api.delete<void>(`/projects/${id}`),
 };
 
 export const tasksApi = {
@@ -64,7 +58,7 @@ export const tasksApi = {
     api.patch<Task>(`/tasks/${id}`, data),
     
   delete: (id: number) => 
-    api.delete(`/tasks/${id}`),
+    api.delete<void>(`/tasks/${id}`),
 };
 
 export const teamApi = {
@@ -81,7 +75,7 @@ export const teamApi = {
     api.patch<TeamMember>(`/team-members/${id}`, data),
     
   delete: (id: number) => 
-    api.delete(`/team-members/${id}`),
+    api.delete<void>(`/team-members/${id}`),
 };
 
 export const timesheetApi = {
@@ -102,5 +96,5 @@ export const timesheetApi = {
     api.patch<TimesheetEntry>(`/timesheet/${id}`, data),
     
   delete: (id: number) => 
-    api.delete(`/timesheet/${id}`),
+    api.delete<void>(`/timesheet/${id}`),
 };

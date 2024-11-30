@@ -28,7 +28,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Project } from '@/lib/redux/features/projects/projectsSlice';
+import { Project } from '@/lib/redux/features/projects/types';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { createProject } from '@/lib/redux/features/projects/projectsSlice';
@@ -61,7 +61,9 @@ const defaultValues: Omit<Project, 'id'> = {
   progress: 0,
   team: [],
   tasks: [],
-  task: { total: 0, completed: 0 },
+  task_completed: 0,
+  task_total: 0,
+  admin_id: '',
 };
 
 export function CreateProjectDialog({
@@ -88,8 +90,13 @@ export function CreateProjectDialog({
         dueDate: formattedDueDate,
         progress: 0,
         team: [],
-        task: { total: 0, completed: 0 },
+        task_completed: 0,
+        task_total: 0,
         tasks: [],
+        name: data.name.trim(),
+        description: data.description.trim(),
+        status: data.status || 'not-started',
+        priority: data.priority || 'medium',
       }));
       router.push('/projects');
       setError(null);
