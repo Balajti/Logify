@@ -1,40 +1,58 @@
-import { sql } from '@vercel/postgres';
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { QueryResult } from '@vercel/postgres';
-import { config } from 'dotenv';
-
-config();
-
-interface TimesheetRow {
-  id: number;
-  team_member_id: number;
-  date: string;
-  hours: number;
-  description: string;
-  project_id: number;
-  task_id: number;
-}
-
-const createTimesheetSchema = z.object({
-  team_member_id: z.number(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format, should be YYYY-MM-DD'),
-  hours: z.number().min(0),
-  description: z.string().optional(),
-  project_id: z.number(),
-  task_id: z.number()
-});
+import { authOptions } from "@/lib/auth";
+import { sql } from "@vercel/postgres";
+import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   console.log('Fetching timesheet entries...');
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const admin_id = session.user.admin_id || session.user.id;
     const { searchParams } = new URL(request.url);
+    
+    // Build base query
+    const conditions: string[] = [];
+    const values: any[] = [];
+
+    // Always add admin_id as the first condition
+    conditions.push(`t.admin_id = $1`);
+    values.push(admin_id);
+
+    let paramCount = 2;
+
+    // Handle numeric parameters
     const team_member_id = searchParams.get('team_member_id');
+    if (team_member_id && !isNaN(Number(team_member_id))) {
+      conditions.push(`t.team_member_id = $${paramCount}`);
+      values.push(Number(team_member_id));
+      paramCount++;
+    }
+
     const project_id = searchParams.get('project_id');
-    const start_date = searchParams.get('start_date');
-    const end_date = searchParams.get('end_date');
-    // Build the query based on provided filters
-    let baseQuery = `
+    if (project_id && !isNaN(Number(project_id))) {
+      conditions.push(`t.project_id = $${paramCount}`);
+      values.push(Number(project_id));
+      paramCount++;
+    }
+
+    // Handle date parameters
+    if (searchParams.get('start_date')) {
+      conditions.push(`t.date >= $${paramCount}`);
+      values.push(searchParams.get('start_date'));
+      paramCount++;
+    }
+
+    if (searchParams.get('end_date')) {
+      conditions.push(`t.date <= $${paramCount}`);
+      values.push(searchParams.get('end_date'));
+      paramCount++;
+    }
+
+    const query = `
       SELECT 
         t.*,
         tm.name as team_member_name,
@@ -44,116 +62,20 @@ export async function GET(request: Request) {
       JOIN team_members tm ON t.team_member_id = tm.id
       JOIN projects p ON t.project_id = p.id
       JOIN tasks tk ON t.task_id = tk.id
-      WHERE 1=1
+      WHERE ${conditions.join(' AND ')}
+      ORDER BY t.date DESC, t.created_at DESC
     `;
-    const conditions: string[] = [];
-    const values: any[] = [];
-    let paramCount = 1;
-    if (team_member_id) {
-      conditions.push(`t.team_member_id = $${paramCount}`);
-      values.push(team_member_id);
-      paramCount++;
-    }
-    if (project_id) {
-      conditions.push(`t.project_id = $${paramCount}`);
-      values.push(project_id);
-      paramCount++;
-    }
-    if (start_date) {
-      conditions.push(`t.date >= $${paramCount}`);
-      values.push(start_date);
-      paramCount++;
-    }
-    if (end_date) {
-      conditions.push(`t.date <= $${paramCount}`);
-      values.push(end_date);
-      paramCount++;
-    }
-    if (conditions.length > 0) {
-      baseQuery += ` AND ${conditions.join(' AND ')}`;
-    }
-    
-    baseQuery += ` ORDER BY t.date DESC, t.created_at DESC`;
-    const result = await sql.query(baseQuery, values);
-    console.log('Timesheet entries fetched successfully');
+
+    console.log('Executing query:', query, values); // Debug log
+    const result = await sql.query(query, values);
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Failed to fetch timesheet entries:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch timesheet entries' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: Request) {
-  console.log('Creating timesheet entry...');
-  try {
-    const json = await request.json();
-    const body = createTimesheetSchema.parse(json);
-    // Begin transaction
-    await sql`BEGIN`;
-    try {
-      // First verify that the task belongs to the project
-      const taskCheck: QueryResult<{ count: number }> = await sql`
-        SELECT COUNT(*) as count 
-        FROM tasks 
-        WHERE id = ${body.task_id} 
-        AND project_id = ${body.project_id}
-      `;
-      if (taskCheck.rows[0].count === 0) {
-        await sql`ROLLBACK`;
-        return NextResponse.json(
-          { error: 'Task does not belong to the specified project' },
-          { status: 400 }
-        );
-      }
-      // Insert the timesheet entry
-      const result: QueryResult<TimesheetRow> = await sql`
-        INSERT INTO timesheet (
-          team_member_id,
-          date,
-          hours,
-          description,
-          project_id,
-          task_id
-        )
-        VALUES (
-          ${body.team_member_id},
-          ${body.date},
-          ${body.hours},
-          ${body.description},
-          ${body.project_id},
-          ${body.task_id}
-        )
-        RETURNING *
-      `;
-      await sql`COMMIT`;
-      console.log('Timesheet entry created successfully');
-      return NextResponse.json(result.rows[0], { status: 201 });
-    } catch (error: any) {
-      await sql`ROLLBACK`;
-      console.error('Failed to create timesheet entry, rolling back:', error);
-      // Check for unique constraint violation
-      if (error.code === '23505') {
-        return NextResponse.json(
-          { error: 'A timesheet entry already exists for this team member, task, and date' },
-          { status: 409 }
-        );
-      }
-      throw error;
-    }
-  } catch (error) {
-    console.error('Failed to create timesheet entry:', error);
-    
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
-        { status: 400 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Failed to create timesheet entry' },
+      { 
+        error: 'Failed to fetch timesheet entries',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     );
   }

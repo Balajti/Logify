@@ -53,20 +53,20 @@ export const fetchTimesheetEntries = createAsyncThunk(
   async (filters: { team_member_id?: number }, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-      const session = state.auth.session;
+      const auth = state.auth;
 
-      if (!session?.user) {
+      if (!auth.session?.user) {
         throw new Error('User not authenticated');
       }
 
       let queryParams: Record<string, any> = {
         ...filters,
-        admin_id: session.user.admin_id || session.user.id
+        admin_id: auth.admin_id || auth.session.user.id
       };
 
       // If user is not admin, only show their own entries
-      if (session.user.role !== 'admin') {
-        queryParams.team_member_id = session.user.id;
+      if (auth.session.user.role !== 'admin') {
+        queryParams.team_member_id = auth.session.user.id;
       }
 
       const response = await timesheetApi.getFiltered(queryParams);

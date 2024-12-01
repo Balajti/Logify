@@ -1,4 +1,5 @@
 import { Session } from 'next-auth';
+import { useAppSelector } from '../../hooks';
 
 export interface AuthUser {
   id: string;
@@ -16,6 +17,7 @@ export interface AuthState {
   } | null;
   status: 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
   error: string | null;
+  admin_id?: string;
 }
 
 // Helper function to transform NextAuth session to our auth state format

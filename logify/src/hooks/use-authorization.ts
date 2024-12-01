@@ -13,6 +13,7 @@ export function useAuthorization() {
     isEmployee: userRole === 'employee',
     userRole,
     userId,
+    adminId: userRole === 'admin' ? userId : (session?.user as any)?.adminId,
     hasPermission: (allowedRoles: UserRole[]) => allowedRoles.includes(userRole),
   };
 }

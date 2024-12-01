@@ -13,6 +13,7 @@ const teamMemberSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
   department: z.string().optional(),
+  role: z.string().min(1, "Role is required"),
   phone: z.string().optional(),
 });
 
@@ -145,12 +146,26 @@ export function AddMemberDialog({ onMemberAdded }: AddMemberDialogProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="department">Department (Optional)</Label>
+                <Label htmlFor="department">Department</Label>
                 <Input
                   id="department"
                   {...form.register("department")}
                   placeholder="Enter department"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Input
+                  id="role"
+                  {...form.register("role")}
+                  placeholder="Enter role (e.g., Developer, Designer)"
+                />
+                {form.formState.errors.role && (
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.role.message}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-2">

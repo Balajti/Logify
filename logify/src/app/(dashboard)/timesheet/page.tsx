@@ -42,10 +42,6 @@ export default function TimesheetPage() {
     return <div>Loading...</div>;
   }
 
-  if (status === 'failed') {
-    return <div>Failed to load timesheet entries</div>;
-  }
-
   return (
     <DashboardWrapper>
       <div className="space-y-6">

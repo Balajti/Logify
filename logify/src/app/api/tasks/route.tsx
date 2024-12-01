@@ -2,9 +2,10 @@ import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { QueryResult } from '@vercel/postgres';
-import { config } from 'dotenv';
-
-config();
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { useAppSelector } from '@/lib/redux/hooks';
+import { selectAdminId } from '@/lib/redux/features/auth/authSlice';
 
 interface TaskRow {
   id: number;
@@ -14,6 +15,8 @@ interface TaskRow {
   priority: string;
   due_date: string;
   project_id: number;
+  admin_id: string;
+  is_completed: boolean;
 }
 
 const createTaskSchema = z.object({
@@ -26,13 +29,40 @@ const createTaskSchema = z.object({
   assignedTo: z.array(z.number()).optional()
 });
 
-export async function GET() {
-  console.log('Fetching tasks...');
+export async function GET(request: Request) {
   try {
-    const tasks: QueryResult<TaskRow> = await sql`
-      SELECT * FROM tasks
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    console.log('sesssioon', session);
+
+    const admin_id = session.user.admin_id || session.user.id;
+    console.log('Fetching tasks for admin_id:', admin_id);
+
+    const tasks = await sql`
+      SELECT t.*,
+        COUNT(DISTINCT ttm.team_member_id) as assigned_count,
+        p.name as project_name
+      FROM tasks t
+      LEFT JOIN task_team_members ttm ON t.id = ttm.task_id
+      LEFT JOIN projects p ON t.project_id = p.id
+      WHERE t.admin_id = ${admin_id}
+      GROUP BY 
+        t.id,
+        t.title,
+        t.description,
+        t.status,
+        t.priority,
+        t.due_date,
+        t.project_id,
+        t.admin_id,
+        t.is_completed,
+        p.name
+      ORDER BY t.id DESC
     `;
-    console.log('Tasks fetched successfully');
+
     return NextResponse.json(tasks.rows);
   } catch (error) {
     console.error('Failed to fetch tasks:', error);
@@ -44,53 +74,74 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  console.log('Creating task...');
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const admin_id = session.user.admin_id || session.user.id;
     const json = await request.json();
     const body = createTaskSchema.parse(json);
-    // Begin transaction
+
     await sql`BEGIN`;
+
     try {
+      // Verify the project belongs to this admin
+      const projectCheck = await sql`
+        SELECT COUNT(*) as count 
+        FROM projects 
+        WHERE id = ${body.projectId} 
+        AND admin_id = ${admin_id}
+      `;
+
+      if (projectCheck.rows[0].count === 0) {
+        await sql`ROLLBACK`;
+        return NextResponse.json(
+          { error: 'Project not found or unauthorized' },
+          { status: 404 }
+        );
+      }
+
       // Insert the task
-      const taskResult: QueryResult<TaskRow> = await sql`
+      const result = await sql`
         INSERT INTO tasks (
-          title, 
-          description, 
-          status, 
-          priority, 
-          due_date, 
-          project_id
+          title,
+          description,
+          status,
+          priority,
+          due_date,
+          project_id,
+          admin_id,
+          is_completed
         )
         VALUES (
           ${body.title},
-          ${body.description},
+          ${body.description || null},
           ${body.status},
           ${body.priority},
-          ${body.dueDate},
-          ${body.projectId}
+          ${body.dueDate || null},
+          ${body.projectId},
+          ${admin_id},
+          ${body.status === 'completed'}
         )
         RETURNING *
       `;
-      const newTask = taskResult.rows[0];
-      console.log('Task created successfully:', newTask);
-      // If there are team members to assign, insert them
+
+      // If there are team members to assign
       if (body.assignedTo?.length) {
         await Promise.all(
-          body.assignedTo.map((memberId) =>
-            sql`
-              INSERT INTO task_team_members (task_id, team_member_id)
-              VALUES (${newTask.id}, ${memberId})
-            `
-          )
+          body.assignedTo.map(memberId => sql`
+            INSERT INTO task_team_members (task_id, team_member_id)
+            VALUES (${result.rows[0].id}, ${memberId})
+          `)
         );
       }
-      // Commit transaction
+
       await sql`COMMIT`;
-      return NextResponse.json(newTask, { status: 201 });
+      return NextResponse.json(result.rows[0], { status: 201 });
     } catch (error) {
-      // Rollback on error
       await sql`ROLLBACK`;
-      console.error('Failed to create task, rolling back:', error);
       throw error;
     }
   } catch (error) {
@@ -102,6 +153,7 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    
     return NextResponse.json(
       { error: 'Failed to create task' },
       { status: 500 }

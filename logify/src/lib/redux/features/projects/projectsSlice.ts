@@ -14,14 +14,14 @@ export const fetchProjects = createAsyncThunk(
   'projects/fetchProjects',
   async (_, { getState }) => {
     const state = getState() as RootState;
-    const session = state.auth.session;
+    const auth = state.auth;
 
-    if (!session?.user) {
+    if (!auth.session?.user) {
       throw new Error('User not authenticated');
     }
 
     const response = await projectsApi.getAll({
-      admin_id: session.user.admin_id || session.user.id
+      admin_id: auth.admin_id || auth.session.user.id
     });
 
     return response.data;
@@ -32,14 +32,14 @@ export const fetchDashboardData = createAsyncThunk(
   'projects/fetchDashboardData',
   async (_, { getState }) => {
     const state = getState() as RootState;
-    const session = state.auth.session;
+    const auth = state.auth;
 
-    if (!session?.user) {
+    if (!auth.session?.user) {
       throw new Error('User not authenticated');
     }
 
     const params = {
-      admin_id: session.user.admin_id || session.user.id
+      admin_id: auth.admin_id || auth.session.user.id
     };
 
     const [projectsResponse, tasksResponse, timesheetResponse, teamResponse] = await Promise.all([
@@ -52,7 +52,8 @@ export const fetchDashboardData = createAsyncThunk(
     const projects = projectsResponse.data;
     const tasks = tasksResponse.data;
     const timesheetEntries = timesheetResponse.data;
-    const teamMembers = teamResponse.data;
+    const teamMember = teamResponse.data;
+    console.log('team members: ', teamResponse);
 
     const calculateTimeDistribution = (entries: TimesheetEntry[], category: string): number => {
       return Math.round(
@@ -84,7 +85,7 @@ export const fetchDashboardData = createAsyncThunk(
           trend: { value: 0, isPositive: true },
         },
         teamMembers: {
-          value: teamMembers.length,
+          value: teamMember.length,
           trend: { value: 0, isPositive: true },
         },
       },
@@ -100,16 +101,17 @@ export const fetchDashboardData = createAsyncThunk(
 
 export const createProject = createAsyncThunk(
   'projects/createProject',
-  async (projectData: CreateDTO<Project>, { getState }) => {
-    const state = getState() as RootState;
-    const session = state.auth.session;
-
-    if (!session?.user) {
-      throw new Error('User not authenticated');
+  async (projectData: CreateDTO<Project>, { rejectWithValue }) => {
+    try {
+      const response = await projectsApi.create(projectData);
+      if (!response.data) {
+        throw new Error('Failed to create project');
+      }
+      return response.data;
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to create project');
     }
-
-    const response = await projectsApi.create(projectData);
-    return response.data;
   }
 );
 
@@ -206,7 +208,7 @@ export const {
 // Selectors
 export const selectAllProjects = (state: RootState) => state.projects.items;
 export const selectProjectById = (state: RootState, projectId: number) =>
-  state.projects.items.find(project => project.id === projectId);
+  state.projects.items.find(project => Number(project.id) === projectId);
 export const selectDashboardStats = (state: RootState) => state.projects.dashboardStats;
 export const selectTimeDistribution = (state: RootState) => state.projects.timeDistribution;
 export const selectActivities = (state: RootState) => state.projects.activities;

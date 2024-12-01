@@ -24,10 +24,6 @@ export default function TasksPage() {
     return <div>Loading...</div>;
   }
 
-  if (status === 'failed') {
-    return <div>Failed to load tasks</div>;
-  }
-
   return (
     <DashboardWrapper>
       <div className="space-y-6">

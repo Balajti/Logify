@@ -73,40 +73,54 @@ export function CreateProjectDialog({
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm({
     resolver: zodResolver(formSchema),
-    defaultValues,
+    defaultValues: {
+      name: '',
+      description: '',
+      status: 'not-started' as const,
+      priority: 'medium' as const,
+      startDate: '',
+      endDate: '',
+    },
   });
 
-  const handleSubmit = async (data: Omit<Project, 'id'>) => {
-    try {
-      const formattedStartDate = format(new Date(data.startDate), 'yyyy-MM-dd');
-      const formattedEndDate = format(new Date(data.endDate), 'yyyy-MM-dd');
-      const formattedDueDate = format(new Date(data.endDate), 'MMM dd');
-      await dispatch(createProject({
-        ...data,
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-        dueDate: formattedDueDate,
-        progress: 0,
-        team: [],
-        task_completed: 0,
-        task_total: 0,
-        tasks: [],
-        name: data.name.trim(),
-        description: data.description.trim(),
-        status: data.status || 'not-started',
-        priority: data.priority || 'medium',
-      }));
-      router.push('/projects');
-      setError(null);
-    } catch (err) {
-      const errorMessage = (err as Error).message || 'Failed to create project';
-      console.error(errorMessage);
-      setError(errorMessage);
-    }
+const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+  try {
+    setIsSubmitting(true);
+    setError(null);
+
+    // Format dates consistently
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+
+    await dispatch(createProject({
+      name: data.name.trim(),
+      description: data.description.trim(),
+      status: data.status,
+      priority: data.priority,
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      dueDate: format(endDate, 'yyyy-MM-dd'), // Use same format for consistency
+      progress: 0,
+      team: [],
+      tasks: [],
+      task_completed: 0,
+      task_total: 0,
+    })).unwrap();
+
+    router.refresh();
     onClose();
-  };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to create project';
+    setError(errorMessage);
+    console.error('Failed to create project:', err);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -232,6 +246,9 @@ export function CreateProjectDialog({
                 )}
               />
             </div>
+            {error && (
+              <div className="text-red-500 text-sm">{error}</div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

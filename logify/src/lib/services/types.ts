@@ -30,6 +30,8 @@ export interface BaseEntity {
     task_total: number;
     task_completed: number;
     tasks: number[];
+    team_count?: number;
+    totalHours?: number;
   }
   
   export interface Task extends BaseEntity {

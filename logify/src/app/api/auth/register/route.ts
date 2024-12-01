@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       name: body.name,
       email: body.email,
       password: hashedPassword,
-      role: "admin", // First user gets admin role
+      role: "admin",
     });
 
     return NextResponse.json({ 

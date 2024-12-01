@@ -11,20 +11,26 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Clock, CalendarDays, Users, CheckSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tasks } from '@/lib/types/task';
+import { selectAllProjects, selectProjectById } from '@/lib/redux/features/projects/projectsSlice';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   
-  const project = useAppSelector(state =>
-    state.projects.items.find(p => p.id === Number(projectId))
-  );
-  
+  const projects= useAppSelector(selectAllProjects);
+  const project = useAppSelector(state => selectProjectById(state, Number(projectId)));
+  console.log('project', project);
+
   const tasks = useAppSelector(state => state.tasks.items);
-  const filteredTasks = tasks.filter(task => task.projectId === Number(projectId));
+  const filteredTasks = tasks.filter(task => Number(task.projectId) != Number(projectId));
+
+  console.log('tasks', tasks);
+  console.log('filtered tasks', filteredTasks);
 
   const teamMembers = useAppSelector(state => state.team.members);
   const filteredTeamMembers = teamMembers.filter(member => member.projects.includes(Number(projectId)));
+
+  console.log('teamMembers', teamMembers);
 
   if (!project) {
     return <div>Project not found</div>;
@@ -58,21 +64,21 @@ export default function ProjectDetailsPage() {
             <CardContent className="p-6 flex flex-col items-center">
               <Clock className="h-8 w-8 text-blue-500 mb-2" />
               <p className="text-sm text-gray-500">Total Hours</p>
-              <p className="text-2xl font-bold">142.5</p>
+              <p className="text-2xl font-bold">{project.totalHours || '0'}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center">
               <CheckSquare className="h-8 w-8 text-green-500 mb-2" />
               <p className="text-sm text-gray-500">Tasks</p>
-              <p className="text-2xl font-bold">{project.task_completed}/{project.task_total}</p>
+              <p className="text-2xl font-bold">{project.task_completed}/{project.task_total || '0/0'}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center">
               <Users className="h-8 w-8 text-purple-500 mb-2" />
               <p className="text-sm text-gray-500">Team Members</p>
-              <p className="text-2xl font-bold">{project.team.length}</p>
+              <p className="text-2xl font-bold">{project.team_count}</p>
             </CardContent>
           </Card>
           <Card>

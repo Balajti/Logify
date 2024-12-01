@@ -31,6 +31,7 @@ export default function ProjectsPage() {
   const projectsRedux = useAppSelector(state => state.projects.items);
   useEffect(() => {
     if (session) {
+      console.log('fetching projects');
       dispatch(fetchProjects());
     }
   }, [dispatch, session]);

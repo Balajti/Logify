@@ -2,30 +2,17 @@ import { NextAuthOptions } from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import { users } from "@/lib/db/schema";
+import { users, team_members } from "@/lib/db/schema";
+import { sql } from "@vercel/postgres";
 
 export const authOptions: NextAuthOptions = {
-  adapter: DrizzleAdapter(db) as any, // Type casting to avoid adapter compatibility issues
+  adapter: DrizzleAdapter(db) as any,
   session: {
     strategy: "jwt"
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-          role: "user" // Default role for Google sign-ins
-        };
-      }
-    }),
     CredentialsProvider({
       name: "credentials",
       credentials: {
@@ -66,10 +53,29 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // Initial sign in
         token.role = user.role;
         token.id = user.id;
-        token.admin_id = user.admin_id;
       }
+
+      // Check if admin_id is missing and user is not admin
+      if (!token.admin_id && token.role !== 'admin') {
+        try {
+          const result = await sql`
+            SELECT admin_id 
+            FROM team_members 
+            WHERE user_id = ${token.id}
+          `;
+
+          if (result.rows.length > 0) {
+            token.admin_id = result.rows[0].admin_id;
+            console.log('Found and set admin_id:', token.admin_id);
+          }
+        } catch (error) {
+          console.error('Error fetching admin_id:', error);
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {

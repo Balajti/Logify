@@ -27,10 +27,6 @@ export default function TeamPage() {
     return <div>Loading...</div>;
   }
 
-  if (status === 'failed') {
-    return <div>Failed to load team members</div>;
-  }
-
   return (
     <DashboardWrapper>
       <div className="space-y-6">

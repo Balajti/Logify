@@ -1,63 +1,96 @@
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { QueryResult } from '@vercel/postgres';
-import { config } from 'dotenv';
-
-config();
-
-interface ProjectRow {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  priority: string;
-  start_date: string;
-  end_date: string;
-  due_date: string;
-  progress: number;
-}
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { parse, format } from 'date-fns';
 
 const createProjectSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  status: z.enum(['not-started', 'in-progress', 'on-hold', 'completed', 'undefined'])
-    .default('undefined'),
+  status: z.enum(['not-started', 'in-progress', 'on-hold', 'completed', 'undefined']),
   priority: z.enum(['low', 'medium', 'high']),
-  start_date: z.string().optional(),
-  end_date: z.string().optional(),
-  due_date: z.string().optional(),
-  progress: z.number().min(0).max(100).optional(),
-  team_members: z.array(z.number()).optional()
+  startDate: z.string(),
+  endDate: z.string(),
+  dueDate: z.string().optional(),
+  progress: z.number().min(0).max(100),
+  team: z.array(z.number()).optional(),
 });
 
-export async function GET() {
-  console.log('Fetching projects...');
+export async function GET(request: Request) {
   try {
-    const projects: QueryResult<ProjectRow> = await sql`
-      SELECT * FROM projects
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const admin_id = session.user.admin_id || session.user.id;
+    
+    const projects = await sql`
+      SELECT 
+        p.*,
+        COALESCE(COUNT(DISTINCT ptm.team_member_id), 0) as team_count
+      FROM projects p
+      LEFT JOIN project_team_members ptm ON p.id = ptm.project_id
+      WHERE p.admin_id = ${admin_id}
+      GROUP BY 
+        p.id, 
+        p.name, 
+        p.description, 
+        p.status, 
+        p.priority,
+        p.start_date,
+        p.end_date,
+        p.due_date,
+        p.progress,
+        p.task_total,
+        p.task_completed,
+        p.admin_id
+      ORDER BY p.id DESC
     `;
-    console.log('Projects fetched successfully');
+
     return NextResponse.json(projects.rows);
   } catch (error) {
     console.error('Failed to fetch projects:', error);
+    const err = error as Error;
     return NextResponse.json(
-      { error: 'Failed to fetch projects' },
+      { 
+        error: 'Failed to fetch projects',
+        details: err.message
+      },
       { status: 500 }
     );
   }
 }
 
 export async function POST(request: Request) {
-  console.log('Creating project...');
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const admin_id = session.user.admin_id || session.user.id;
     const json = await request.json();
+    console.log('Received data:', json); // Debug log
+    
     const body = createProjectSchema.parse(json);
-    // Begin transaction
+    
+    // Format dates for PostgreSQL
+    const formatDateForDB = (dateStr: string) => {
+      try {
+        const date = new Date(dateStr);
+        return format(date, 'yyyy-MM-dd');
+      } catch (error) {
+        console.error('Date parsing error:', error);
+        throw new Error('Invalid date format');
+      }
+    };
+
     await sql`BEGIN`;
+    
     try {
-      // Insert the project
-      const projectResult: QueryResult<ProjectRow> = await sql`
+      const projectResult = await sql`
         INSERT INTO projects (
           name, 
           description, 
@@ -66,26 +99,29 @@ export async function POST(request: Request) {
           start_date, 
           end_date, 
           due_date, 
-          progress
+          progress,
+          admin_id
         )
         VALUES (
           ${body.name},
-          ${body.description},
+          ${body.description || ''},
           ${body.status},
           ${body.priority},
-          ${body.start_date},
-          ${body.end_date},
-          ${body.due_date},
-          ${body.progress ?? 0}
+          ${formatDateForDB(body.startDate)},
+          ${formatDateForDB(body.endDate)},
+          ${body.dueDate ? formatDateForDB(body.dueDate) : formatDateForDB(body.endDate)},
+          ${body.progress},
+          ${admin_id}
         )
         RETURNING *
       `;
+
       const newProject = projectResult.rows[0];
-      console.log('Project created successfully:', newProject);
-      // If there are team members to assign, insert them
-      if (body.team_members?.length) {
+      console.log('Created project:', newProject); // Debug log
+
+      if (body.team?.length) {
         await Promise.all(
-          body.team_members.map((memberId) =>
+          body.team.map((memberId) =>
             sql`
               INSERT INTO project_team_members (project_id, team_member_id)
               VALUES (${newProject.id}, ${memberId})
@@ -93,13 +129,13 @@ export async function POST(request: Request) {
           )
         );
       }
-      // Commit transaction
+
       await sql`COMMIT`;
+      
       return NextResponse.json(newProject, { status: 201 });
     } catch (error) {
-      // Rollback on error
       await sql`ROLLBACK`;
-      console.error('Failed to create project, rolling back:', error);
+      console.error('SQL Error:', error); // Debug log
       throw error;
     }
   } catch (error) {

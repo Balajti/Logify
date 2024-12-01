@@ -16,10 +16,10 @@ import {
   fetchProjects,
 } from '@/lib/redux/features/projects/projectsSlice';
 import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
-
 export default function DashboardPage() {
 
   const dispatch = useAppDispatch();
+
   useEffect(() => {
     dispatch(fetchDashboardData());
     dispatch(fetchTimesheetEntries({}));
@@ -31,14 +31,6 @@ export default function DashboardPage() {
   const activities = useAppSelector(selectActivities);
   const activeProjects = useAppSelector(selectActiveProjectIds);
   const timesheetSummary = useAppSelector(selectTimesheetSummary);
-
-
-  const sampleData = [
-    { name: 'Development', value: 40 },
-    { name: 'Meetings', value: 20 },
-    { name: 'Planning', value: 25 },
-    { name: 'Other', value: 15 }
-  ];
 
   if (!stats) {
     return <div>Loading...</div>;

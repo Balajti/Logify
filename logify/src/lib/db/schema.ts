@@ -1,4 +1,4 @@
-import { pgTable, text, varchar, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, uuid, serial } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createId } from '@paralleldrive/cuid2';
 
@@ -10,22 +10,19 @@ export const users = pgTable("users", {
   role: text("role").notNull().default('user'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  adminId: text("admin_id")
 });
 
 export const team_members = pgTable("team_members", {
-  id: text("id").primaryKey().notNull().$defaultFn(() => createId()),
-  name: text("name").notNull(),
-  role: text("role").notNull(),
-  department: text("department").notNull(),
-  email: text("email").unique().notNull(),
-  phone: text("phone"),
-  avatar: text("avatar"),
-  status: text("status").notNull().default('active'),
-  adminId: text("admin_id"),
-  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  id: serial("id").primaryKey().$defaultFn(() => 5),
+  name: varchar("name", { length: 255 }).notNull(),
+  role: varchar("role", { length: 100 }),
+  department: varchar("department", { length: 100 }),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  phone: varchar("phone", { length: 50 }),
+  avatar: varchar("avatar", { length: 255 }),
+  status: varchar("status", { length: 10 }).notNull().default('offline'),
+  admin_id: text("admin_id").references(() => users.id),
+  user_id: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
 });
 
 export const accounts = pgTable("accounts", {

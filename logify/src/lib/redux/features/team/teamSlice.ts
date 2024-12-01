@@ -71,14 +71,14 @@ export const fetchTeamMembers = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const state = getState() as RootState;
-      const session = state.auth.session;
+      const auth = state.auth;
 
-      if (!session?.user) {
+      if (!auth.session?.user) {
         throw new Error('User not authenticated');
       }
 
       const response = await teamApi.getAll({
-        admin_id: session.user.admin_id || session.user.id
+        admin_id: auth.admin_id || auth.session.user.id
       });
       
       return response.data.map(transformMember);
