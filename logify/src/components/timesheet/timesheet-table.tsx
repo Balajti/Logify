@@ -266,7 +266,6 @@ export function TimesheetTable({
                 </div>
               </TableHead>
             ))}
-            <TableHead className="text-center">Total</TableHead>
             {isAdminView && <TableHead className="w-[50px]" />}
           </TableRow>
         </TableHeader>
@@ -332,9 +331,6 @@ export function TimesheetTable({
                   </TableCell>
                 );
               })}
-              <TableCell className="text-center font-medium">
-                {calculateWeekTotal()}
-              </TableCell>
               {isAdminView && (
                 <TableCell>
                   <Button
@@ -350,9 +346,17 @@ export function TimesheetTable({
           ))}
         </TableBody>
       </Table>
+      {!isAdminView && (
+        <div className="text-center font-medium">
+          Total Hours: {calculateWeekTotal()}
+        </div>
+      )}
       {isAdminView && (
         <div className="flex justify-between">
           <div className="flex gap-2">
+            <div className="text-center font-medium">
+              Total Hours: {calculateWeekTotal()}
+            </div>
             <Button 
               onClick={() => weekDays.forEach(day => 
                 addNewEntry(format(day, 'yyyy-MM-dd'))

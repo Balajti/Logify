@@ -70,30 +70,40 @@ export const fetchDashboardData = createAsyncThunk(
       { name: 'Research', value: calculateTimeDistribution(timesheetEntries, 'Research') },
     ];
 
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const totalHoursThisMonth = timesheetEntries
+      .filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0);
+
     return {
       stats: {
-        totalHours: {
-          value: Math.round(timesheetEntries.reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0)),
-          trend: { value: 0, isPositive: true },
-        },
-        activeProjects: {
-          value: projects.filter(project => project.status === 'in-progress').length,
-          trend: { value: 0, isPositive: true },
-        },
-        completedTasks: {
-          value: tasks.filter(task => task.status === 'completed').length,
-          trend: { value: 0, isPositive: true },
-        },
-        teamMembers: {
-          value: teamMember.length,
-          trend: { value: 0, isPositive: true },
-        },
+      totalHours: {
+        value: Math.round(totalHoursThisMonth),
+        trend: { value: 0, isPositive: true },
+      },
+      activeProjects: {
+        value: projects.filter(project => project.status === 'in-progress').length,
+        trend: { value: 0, isPositive: true },
+      },
+      completedTasks: {
+        value: tasks.filter(task => task.status === 'completed').length,
+        trend: { value: 0, isPositive: true },
+      },
+      teamMembers: {
+        value: teamMember.length,
+        trend: { value: 0, isPositive: true },
+      },
       },
       timeDistribution,
       activities: [],
       activeProjects: projects
-        .filter(project => project.status === 'in-progress')
-        .map(project => project.id),
+      .filter(project => project.status === 'in-progress')
+      .map(project => project.id),
       overdueTasks: projects.filter(project => project.status === 'not-started').length,
     };
   }

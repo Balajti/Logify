@@ -7,6 +7,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreVertical } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 interface TeamMember {
   id: number;
@@ -14,6 +16,7 @@ interface TeamMember {
   email: string;
   role: string;
   avatar?: string;
+  user_id?: string;
 }
 
 interface TeamListProps {
@@ -21,6 +24,8 @@ interface TeamListProps {
 }
 
 export function TeamList({ teamMembers }: TeamListProps) {
+  const session = useSession();
+
   return (
     <div className="space-y-4">
       {teamMembers.map((member) => (
@@ -30,7 +35,7 @@ export function TeamList({ teamMembers }: TeamListProps) {
             <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <h4 className="text-sm font-medium">{member.name}</h4>
+            <h4 className="text-sm font-medium">{ member.user_id === session.data?.user.id ? 'Me' : member.name }</h4>
             <p className="text-sm text-gray-500">{member.email}</p>
           </div>
           <DropdownMenu>

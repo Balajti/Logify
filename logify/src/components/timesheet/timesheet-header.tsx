@@ -25,9 +25,9 @@ export function TimesheetHeader({
           <Button variant="outline" size="icon" onClick={onPrevious}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="font-medium">
-            {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
-          </span>
+            <span className="font-medium">
+              {format(startDate, 'MMM d')} - {format(endDate, 'MMM d, yyyy')}
+            </span>
           <Button variant="outline" size="icon" onClick={onNext}>
             <ChevronRight className="h-4 w-4" />
           </Button>
