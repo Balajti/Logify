@@ -42,5 +42,3 @@ export function SubmitTimesheetDialog({
     </Dialog>
   );
 }
-
-// src/components/dialog/confirm-logout.tsx

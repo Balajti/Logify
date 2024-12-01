@@ -30,6 +30,8 @@ import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
 import { selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
 import { selectAllTasks } from '@/lib/redux/features/tasks/tasksSlice';
 import { TimesheetEntry } from '@/lib/redux/features/timesheet/types';
+import { toast } from 'sonner';
+import { selectTeamMemberById } from '@/lib/redux/features/team/teamSlice';
 
 // Interfaces
 interface TimesheetTableProps {
@@ -51,6 +53,7 @@ interface TimesheetEntryForPage {
   project_name?: string;
   task_title?: string;
   updated_at?: string;
+  team_member_name?: string;
 }
 
 interface TimesheetDates {
@@ -95,6 +98,7 @@ export function TimesheetTable({
     setLocalEntries(entriesWithNames.filter(entry => weekDays.find(day => format(day, 'yyyy-MM-dd') === entry.date.split("T")[0])));
     //setLocalEntries(entriesWithNames);
 
+    console.log('entriesWithNames: ', localEntries);
     
     const dates = entries.map((entry, id) => ({
       id,
@@ -219,6 +223,44 @@ export function TimesheetTable({
       }));
     }
     setPendingChanges({});
+  };
+
+
+  const sendData = async () => {
+    if (!localEntries.length) return;
+    
+    try {
+        console.log('Sending timesheet data...', {
+            entries: localEntries,
+            employeeName: localEntries[0].team_member_name,
+            startDate: weekDays[0].toISOString(),
+            endDate: weekDays[weekDays.length - 1].toISOString(),
+        });
+
+        const response = await fetch('/api/sendData', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                entries: localEntries,
+                employeeName: localEntries[0].team_member_name || 'Employee',
+                startDate: weekDays[0].toISOString(),
+                endDate: weekDays[weekDays.length - 1].toISOString(),
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to send timesheet');
+        }
+
+        toast.success('Timesheet submitted successfully');
+    } catch (error) {
+        console.error('Failed to submit timesheet:', error);
+        toast.error(error instanceof Error ? error.message : 'Failed to submit timesheet');
+    }
   };
 
   const addNewEntry = async (date: string) => {
@@ -370,13 +412,17 @@ export function TimesheetTable({
                 <Save className="h-4 w-4" /> Save Changes
               </Button>
             )}
+            <Button onClick={() => setShowSubmitDialog(true)}>
+              Submit Timesheet
+            </Button>
           </div>
           <SubmitTimesheetDialog
             open={showSubmitDialog}
             onClose={() => setShowSubmitDialog(false)}
             onSubmit={() => {
               saveChanges();
-              setShowSubmitDialog(false);
+              setShowSubmitDialog(true);
+              sendData();
             }}
           />
         </div>

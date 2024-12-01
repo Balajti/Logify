@@ -32,7 +32,6 @@ export function TimesheetHeader({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
-        <Button>Submit Timesheet</Button>
       </div>
     </div>
   );

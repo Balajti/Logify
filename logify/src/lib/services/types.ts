@@ -55,6 +55,12 @@ export interface BaseEntity {
     status: 'active' | 'away' | 'offline';
     user_id: string;
   }
+
+  export interface ProjectTaskHours {
+    [projectName: string]: {
+        [taskName: string]: number;
+    };
+  }
   
   export type CreateDTO<T> = Omit<T, keyof BaseEntity>;
   export type UpdateDTO<T> = Partial<CreateDTO<T>>;

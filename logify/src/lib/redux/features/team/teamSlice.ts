@@ -268,4 +268,7 @@ export const selectTeamMembersByProject = (state: RootState, projectId: number) 
 export const selectAvailableMembers = (state: RootState) =>
   state.team.members.filter(member => member.availability >= 20);
 
+export const selectTeamMemberById = (state: RootState, memberId: number) =>
+  state.team.members.find(m => m.id === memberId);
+
 export default teamSlice.reducer;

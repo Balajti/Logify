@@ -27,7 +27,7 @@ export async function sendWelcomeEmail(
                     <!-- Header -->
                     <tr>
                         <td style="padding: 40px 40px 20px;">
-                        <div style="font-size: 24px; font-weight: 700; color: #E4E6E7;">Logify</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #8a8a8a; text-shadow: 7px 5px 8px #838383;">Logify</div>
                         <h1 style="margin: 0; color: hsl(220, 4%, 28%); font-size: 24px; font-weight: 600;">Welcome to Logify, ${name}! 👋</h1>
                         </td>
                     </tr>
