@@ -59,7 +59,7 @@ export const fetchTimesheetEntries = createAsyncThunk(
         throw new Error('User not authenticated');
       }
 
-      let queryParams: Record<string, any> = {
+      const queryParams: Record<string, any> = {
         ...filters,
         admin_id: auth.admin_id || auth.session.user.id
       };

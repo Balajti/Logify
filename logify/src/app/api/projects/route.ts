@@ -98,8 +98,7 @@ export async function POST(request: Request) {
           priority, 
           start_date, 
           end_date, 
-          due_date, 
-          progress,
+          due_date,
           admin_id
         )
         VALUES (
@@ -110,7 +109,6 @@ export async function POST(request: Request) {
           ${formatDateForDB(body.startDate)},
           ${formatDateForDB(body.endDate)},
           ${body.dueDate ? formatDateForDB(body.dueDate) : formatDateForDB(body.endDate)},
-          ${body.progress},
           ${admin_id}
         )
         RETURNING *

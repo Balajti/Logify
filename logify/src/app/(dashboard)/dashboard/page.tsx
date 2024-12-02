@@ -14,6 +14,7 @@ import {
   selectActiveProjectIds,
   fetchDashboardData,
   fetchProjects,
+  updateProjectProgress,
 } from '@/lib/redux/features/projects/projectsSlice';
 import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
 export default function DashboardPage() {
@@ -24,6 +25,7 @@ export default function DashboardPage() {
     dispatch(fetchDashboardData());
     dispatch(fetchTimesheetEntries({}));
     dispatch(fetchProjects());
+    dispatch(updateProjectProgress())
   }, [dispatch]);
 
   const stats = useAppSelector(selectDashboardStats);

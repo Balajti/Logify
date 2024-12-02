@@ -10,7 +10,7 @@ import { CreateProjectDialog } from '@/components/projects/create-project-dialog
 import { Plus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { useSession } from 'next-auth/react';
-import { fetchProjects } from '@/lib/redux/features/projects/projectsSlice';
+import { fetchProjects, updateProjectProgress } from '@/lib/redux/features/projects/projectsSlice';
 
 export default function ProjectsPage() {
   const { isAdmin } = useAuthorization();
@@ -33,6 +33,7 @@ export default function ProjectsPage() {
     if (session) {
       console.log('fetching projects');
       dispatch(fetchProjects());
+      dispatch(updateProjectProgress())
     }
   }, [dispatch, session]);
 

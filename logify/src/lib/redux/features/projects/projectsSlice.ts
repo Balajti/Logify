@@ -53,7 +53,6 @@ export const fetchDashboardData = createAsyncThunk(
     const tasks = tasksResponse.data;
     const timesheetEntries = timesheetResponse.data;
     const teamMember = teamResponse.data;
-    console.log('team members: ', teamResponse);
 
     const calculateTimeDistribution = (entries: TimesheetEntry[], category: string): number => {
       return Math.round(
@@ -168,11 +167,12 @@ const projectsSlice = createSlice({
     clearFilters: (state) => {
       state.filters = initialState.filters;
     },
-    updateProjectProgress: (state, action: PayloadAction<{ projectId: number; progress: number }>) => {
-      const project = state.items.find(project => project.id === action.payload.projectId);
-      if (project) {
-        project.progress = action.payload.progress;
-      }
+    updateProjectProgress: (state) => {
+      state.items.forEach((project) => {
+        const totalTasks = project.task_total || 0;
+        const completedTasks = project.task_completed || 0;
+        project.progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      });
     },
   },
   extraReducers: (builder) => {

@@ -15,6 +15,8 @@ interface ProjectCardProps {
 export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
   const teamMembers = useAppSelector(selectAllTeamMembers);
 
+  console.log('project', project);
+
   const getStatusColor = (status: Project['status']) => {
     const colors = {
       'not-started': 'bg-gray-100 text-gray-800',
@@ -54,12 +56,14 @@ export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
       <CardContent>
         <div className="space-y-2">
           <p className="text-sm text-gray-500">{project.description}</p>
-          <div className="flex items-center justify-between">
-            <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
-              {project.status}
-            </span>
-            <Progress value={project.progress} className="w-full" />
-          </div>
+            <div className="flex items-center justify-between gap-1">
+              <span className="w-1/4">
+                <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(project.status)}`}>
+                  {project.status}
+              </span>
+              </span>
+              <Progress value={project.progress} className="w-3/4" />
+            </div>
           <div className="text-sm text-gray-500">Team</div>
           <div className="flex -space-x-2">
             {project.team?.map((memberId) => {
