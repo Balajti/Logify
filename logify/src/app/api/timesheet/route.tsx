@@ -3,6 +3,7 @@ import { sql } from "@vercel/postgres";
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
 
+// Handle GET requests (already implemented)
 export async function GET(request: Request) {
   console.log('Fetching timesheet entries...');
   try {
@@ -13,18 +14,15 @@ export async function GET(request: Request) {
 
     const admin_id = session.user.admin_id || session.user.id;
     const { searchParams } = new URL(request.url);
-    
-    // Build base query
+
     const conditions: string[] = [];
     const values: any[] = [];
 
-    // Always add admin_id as the first condition
     conditions.push(`t.admin_id = $1`);
     values.push(admin_id);
 
     let paramCount = 2;
 
-    // Handle numeric parameters
     const team_member_id = searchParams.get('team_member_id');
     if (team_member_id && !isNaN(Number(team_member_id))) {
       conditions.push(`t.team_member_id = $${paramCount}`);
@@ -39,7 +37,6 @@ export async function GET(request: Request) {
       paramCount++;
     }
 
-    // Handle date parameters
     if (searchParams.get('start_date')) {
       conditions.push(`t.date >= $${paramCount}`);
       values.push(searchParams.get('start_date'));
@@ -66,16 +63,57 @@ export async function GET(request: Request) {
       ORDER BY t.date DESC, t.created_at DESC
     `;
 
-    console.log('Executing query:', query, values); // Debug log
+    console.log('Executing query:', query, values);
     const result = await sql.query(query, values);
     return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Failed to fetch timesheet entries:', error);
     return NextResponse.json(
-      { 
-        error: 'Failed to fetch timesheet entries',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to fetch timesheet entries', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}
+
+// Handle POST requests to create a new entry
+export async function POST(request: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const admin_id = session.user.admin_id || session.user.id;
+    const body = await request.json();
+
+    // Validate required fields
+    if (!body.team_member_id || !body.project_id || !body.task_id || !body.date || body.hours == null) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    const query = `
+      INSERT INTO timesheet (
+        team_member_id, project_id, task_id, date, hours, description, admin_id
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *;
+    `;
+
+    const values = [
+      body.team_member_id,
+      body.project_id,
+      body.task_id,
+      body.date,
+      body.hours,
+      body.description || null,
+      admin_id,
+    ];
+
+    const result = await sql.query(query, values);
+    return NextResponse.json(result.rows[0], { status: 201 });
+  } catch (error) {
+    console.error("Failed to create timesheet entry:", error);
+    return NextResponse.json(
+      { error: "Failed to create timesheet entry", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

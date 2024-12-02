@@ -3,12 +3,14 @@
 import { useEffect, useState } from 'react';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
 import { TimesheetHeader } from '@/components/timesheet/timesheet-header';
-import { TimesheetTable } from '@/components/timesheet/timesheet-table';
+import { TimesheetEntry, TimesheetTable } from '@/components/timesheet/timesheet-table';
 import { AdminTimesheetView } from '@/components/timesheet/admin-timesheet-view';
 import { useAuthorization } from '@/hooks/use-authorization';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { fetchTimesheetEntries, selectAllTimesheetEntries, selectTimesheetStatus } from '@/lib/redux/features/timesheet/timesheetSlice';
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
+import { fetchTasks } from '@/lib/redux/features/tasks/tasksSlice';
 
 export default function TimesheetPage() {
   const { isAdmin, userId } = useAuthorization();
@@ -29,6 +31,8 @@ export default function TimesheetPage() {
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
 
   useEffect(() => {
+    dispatch(fetchTeamMembers());
+    dispatch(fetchTasks());
     if (isAdmin) {
       dispatch(fetchTimesheetEntries({}));
     } else {
@@ -55,7 +59,7 @@ export default function TimesheetPage() {
               onPrevious={handlePreviousWeek}
               onNext={handleNextWeek}
             />
-            <TimesheetTable startDate={weekStart} entries={timesheetEntries} employeeId={userId} />
+            <TimesheetTable startDate={weekStart} entries={timesheetEntries} employeeId={userId} isAdminView={!isAdmin}/>
           </>
         )}
       </div>
