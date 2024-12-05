@@ -1,3 +1,5 @@
+import { Task } from "../tasks/types";
+
 export interface TeamMemberWorkload {
     assigned: number;
     completed: number;
@@ -21,7 +23,7 @@ export interface TeamMemberWorkload {
     status: 'active' | 'away' | 'offline';
     user_id: string;
     projects: number[];
-    tasks: number[];
+    tasks: Task[];
     workload: TeamMemberWorkload;
     performance: TeamMemberPerformance;
     availability: number;

@@ -19,7 +19,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     const fields = [];
     const values: any[] = [];
 
-    // Add each field to the query dynamically
+    
     if (body.hours) {
       fields.push(`hours = $${fields.length + 1}`);
       values.push(body.hours);
@@ -44,7 +44,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       );
     }
 
-    values.push(admin_id, id); // Add admin_id and entry id to WHERE clause
+    values.push(admin_id, id);
 
     const query = `
       UPDATE timesheet
@@ -69,7 +69,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 // Handle DELETE request to delete an entry
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_: Request, { params }: { params: { id: string } }) {
   const { id } = params;
 
   try {

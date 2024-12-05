@@ -46,8 +46,14 @@ export const projectsApi = {
   update: (id: number, data: UpdateDTO<Project>) => 
     api.patch<Project>(`/projects/${id}`, data),
     
-  delete: (id: number) => 
-    api.delete(`/projects/${id}`),
+  async delete(id: number) {
+    const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error || 'Failed to delete project');
+    }
+    return res.json();
+  },
 };
 
 export const tasksApi = {
@@ -63,8 +69,13 @@ export const tasksApi = {
   update: (id: number, data: UpdateDTO<Task>) => 
     api.patch<Task>(`/tasks/${id}`, data),
     
-  delete: (id: number) => 
-    api.delete(`/tasks/${id}`),
+  async delete(id: number) {
+    const res = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      throw new Error('Failed to delete task');
+    }
+    return res.json();
+  },
 };
 
 export const teamApi = {

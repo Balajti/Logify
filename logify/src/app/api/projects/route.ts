@@ -25,31 +25,95 @@ export async function GET(request: Request) {
     }
 
     const admin_id = session.user.admin_id || session.user.id;
-    
-    const projects = await sql`
+
+    const result = await sql`
       SELECT 
-        p.*,
-        COALESCE(COUNT(DISTINCT ptm.team_member_id), 0) as team_count
-      FROM projects p
-      LEFT JOIN project_team_members ptm ON p.id = ptm.project_id
-      WHERE p.admin_id = ${admin_id}
-      GROUP BY 
-        p.id, 
-        p.name, 
-        p.description, 
-        p.status, 
+        p.id,
+        p.name,
+        p.description,
+        p.status,
         p.priority,
         p.start_date,
         p.end_date,
         p.due_date,
-        p.progress,
         p.task_total,
         p.task_completed,
-        p.admin_id
+        p.admin_id,
+        p.progress,
+
+        COUNT(DISTINCT t.id) AS task_count,
+        COUNT(DISTINCT ti.id) AS timesheet_count,
+        COUNT(DISTINCT ptm.team_member_id) AS team_member_count,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'task_id', t.id,
+              'task_title', t.title,
+              'task_description', t.description,
+              'task_status', t.status,
+              'task_priority', t.priority,
+              'task_due_date', t.due_date,
+              'task_is_completed', t.is_completed,
+              'task_admin_id', t.admin_id
+            )
+          ) FILTER (WHERE t.id IS NOT NULL),
+          '[]'
+        ) AS tasks,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'timesheet_id', ti.id,
+              'task_id', ti.task_id,
+              'team_member_id', ti.team_member_id,
+              'date', ti.date,
+              'hours', ti.hours,
+              'description', ti.description
+            )
+          ) FILTER (WHERE ti.id IS NOT NULL),
+          '[]'
+        ) AS timesheets,
+
+        COALESCE(
+          json_agg(
+            DISTINCT jsonb_build_object(
+              'team_member_id', tm.id,
+              'team_member_name', tm.name,
+              'team_member_role', tm.role,
+              'team_member_department', tm.department,
+              'team_member_email', tm.email,
+              'team_member_phone', tm.phone,
+              'team_member_avatar', tm.avatar,
+              'team_member_status', tm.status
+            )
+          ) FILTER (WHERE tm.id IS NOT NULL),
+          '[]'
+        ) AS team_members
+
+      FROM projects p
+      LEFT JOIN project_team_members ptm ON p.id = ptm.project_id
+      LEFT JOIN team_members tm ON ptm.team_member_id = tm.id
+      LEFT JOIN tasks t ON t.project_id = p.id
+      LEFT JOIN timesheet ti ON ti.project_id = p.id
+      WHERE p.admin_id = ${admin_id}
+      GROUP BY 
+        p.id,
+        p.name,
+        p.description,
+        p.status,
+        p.priority,
+        p.start_date,
+        p.end_date,
+        p.due_date,
+        p.task_total,
+        p.task_completed,
+        p.admin_id,
+        p.progress
       ORDER BY p.id DESC
     `;
 
-    return NextResponse.json(projects.rows);
+    return NextResponse.json(result.rows);
   } catch (error) {
     console.error('Failed to fetch projects:', error);
     const err = error as Error;
@@ -63,6 +127,7 @@ export async function GET(request: Request) {
   }
 }
 
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -72,7 +137,6 @@ export async function POST(request: Request) {
 
     const admin_id = session.user.admin_id || session.user.id;
     const json = await request.json();
-    console.log('Received data:', json); // Debug log
     
     const body = createProjectSchema.parse(json);
     
@@ -115,7 +179,6 @@ export async function POST(request: Request) {
       `;
 
       const newProject = projectResult.rows[0];
-      console.log('Created project:', newProject); // Debug log
 
       if (body.team?.length) {
         await Promise.all(

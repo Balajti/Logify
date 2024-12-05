@@ -6,9 +6,8 @@ import { TimeDistribution } from '@/components/dashboard/time-distribution';
 import { TrendChart } from '@/components/analytics/trend-chart';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { useEffect } from 'react';
-import { fetchDashboardData, fetchProjects, selectActiveProjectIds, selectActivities, selectDashboardStats, selectTimeDistribution } from '@/lib/redux/features/projects/projectsSlice';
+import { fetchDashboardData, fetchProjects, selectActiveProjectIds, selectActivities, selectDashboardStats, selectOverdueTasks, selectTimeDistribution } from '@/lib/redux/features/projects/projectsSlice';
 import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
-import { selectOverdueTasks } from '@/lib/redux/features/tasks/tasksSlice';
 import { TeamPerformance } from '@/components/analytics/team-performance';
 
 export default function AnalyticsPage() {

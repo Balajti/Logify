@@ -66,13 +66,6 @@ export function AdminTimesheetView() {
         <h1 className="text-3xl font-bold">Timesheets</h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={handlePreviousWeek}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
             <Select 
               defaultValue={selectedEmployee?.toString()} 
               onValueChange={handleEmployeeChange}
@@ -88,13 +81,6 @@ export function AdminTimesheetView() {
                 ))}
               </SelectContent>
             </Select>
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={handleNextWeek}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>

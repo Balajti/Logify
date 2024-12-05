@@ -21,10 +21,8 @@ export async function POST(request: Request) {
       if (!session?.user) {
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      console.log('Session :', session);
 
       const body = await request.json();
-      console.log('Received request body:', body);
 
       if (!body.entries || !Array.isArray(body.entries) || body.entries.length === 0) {
           return NextResponse.json({ error: 'No entries provided' }, { status: 400 });
@@ -86,10 +84,8 @@ export async function POST(request: Request) {
               .join('')
       ).join('');
 
-      console.log('body entries: ', body.entries);
       const totalHours = body.entries.reduce((sum: number, entry: any) => sum + Number(entry.hours), 0);
 
-      console.log('Sending email to:', adminEmail);
 
         await transporter.sendMail({
             from: process.env.GMAIL_EMAIL,

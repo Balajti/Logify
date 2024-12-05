@@ -23,7 +23,6 @@ export async function POST(request: Request) {
     if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    console.log('sesssioon', session);
 
     const json = await request.json();
     const body = teamMemberSchema.parse(json);

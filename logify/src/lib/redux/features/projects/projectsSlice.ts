@@ -28,6 +28,19 @@ export const fetchProjects = createAsyncThunk(
   }
 );
 
+export const deleteProjectAsync = createAsyncThunk(
+  'projects/deleteProject',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await projectsApi.delete(id);
+      return id;
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to delete project');
+    }
+  }
+);
+
 export const fetchDashboardData = createAsyncThunk(
   'projects/fetchDashboardData',
   async (_, { getState }) => {
@@ -96,14 +109,14 @@ export const fetchDashboardData = createAsyncThunk(
       teamMembers: {
         value: teamMember.length,
         trend: { value: 0, isPositive: true },
-      },
+      }
       },
       timeDistribution,
       activities: [],
       activeProjects: projects
       .filter(project => project.status === 'in-progress')
       .map(project => project.id),
-      overdueTasks: projects.filter(project => project.status === 'not-started').length,
+      overdueTasks: projects.filter(project => project.status != 'completed').length,
     };
   }
 );
@@ -205,6 +218,9 @@ const projectsSlice = createSlice({
       .addCase(createProject.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message || 'Failed to create project';
+      })
+      .addCase(deleteProjectAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter(project => project.id !== action.payload);
       });
   },
 });
@@ -223,5 +239,6 @@ export const selectDashboardStats = (state: RootState) => state.projects.dashboa
 export const selectTimeDistribution = (state: RootState) => state.projects.timeDistribution;
 export const selectActivities = (state: RootState) => state.projects.activities;
 export const selectActiveProjectIds = (state: RootState) => state.projects.activeProjects;
+export const selectOverdueTasks = (state: RootState) => state.projects.overdueTasks;
 
 export default projectsSlice.reducer;

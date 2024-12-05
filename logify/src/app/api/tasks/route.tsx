@@ -1,11 +1,8 @@
 import { sql } from '@vercel/postgres';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { QueryResult } from '@vercel/postgres';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { useAppSelector } from '@/lib/redux/hooks';
-import { selectAdminId } from '@/lib/redux/features/auth/authSlice';
 
 interface TaskRow {
   id: number;
@@ -36,10 +33,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('sesssioon', session);
-
     const admin_id = session.user.admin_id || session.user.id;
-    console.log('Fetching tasks for admin_id:', admin_id);
 
     const tasks = await sql`
       SELECT t.*,
@@ -49,17 +43,7 @@ export async function GET(request: Request) {
       LEFT JOIN task_team_members ttm ON t.id = ttm.task_id
       LEFT JOIN projects p ON t.project_id = p.id
       WHERE t.admin_id = ${admin_id}
-      GROUP BY 
-        t.id,
-        t.title,
-        t.description,
-        t.status,
-        t.priority,
-        t.due_date,
-        t.project_id,
-        t.admin_id,
-        t.is_completed,
-        p.name
+      GROUP BY t.id, p.name
       ORDER BY t.id DESC
     `;
 

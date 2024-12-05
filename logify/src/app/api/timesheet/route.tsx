@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 
 // Handle GET requests (already implemented)
 export async function GET(request: Request) {
-  console.log('Fetching timesheet entries...');
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
@@ -63,7 +62,6 @@ export async function GET(request: Request) {
       ORDER BY t.date DESC, t.created_at DESC
     `;
 
-    console.log('Executing query:', query, values);
     const result = await sql.query(query, values);
     return NextResponse.json(result.rows);
   } catch (error) {
@@ -86,8 +84,9 @@ export async function POST(request: Request) {
     const admin_id = session.user.admin_id || session.user.id;
     const body = await request.json();
 
+
     // Validate required fields
-    if (!body.team_member_id || !body.project_id || !body.task_id || !body.date || body.hours == null) {
+    if (!body.team_member_id || !body.project_id || !body.task_id || !body.date || body.hours == null || !body.description) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -104,7 +103,7 @@ export async function POST(request: Request) {
       body.task_id,
       body.date,
       body.hours,
-      body.description || null,
+      body.description,
       admin_id,
     ];
 

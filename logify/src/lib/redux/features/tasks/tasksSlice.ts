@@ -201,7 +201,6 @@ export const selectTasksStatus = (state: RootState) => state.tasks.status;
 export const selectTasksError = (state: RootState) => state.tasks.error;
 export const selectTasksFilters = (state: RootState) => state.tasks.filters;
 export const selectTaskStats = (state: RootState) => state.tasks.stats;
-export const selectOverdueTasks = (state: RootState) => state.tasks.stats.overdue;
 
 export const selectFilteredTasks = (state: RootState) => {
   const { items, filters } = state.tasks;

@@ -15,7 +15,6 @@ interface ProjectCardProps {
 export function ProjectCard({ project, isAdmin = false }: ProjectCardProps) {
   const teamMembers = useAppSelector(selectAllTeamMembers);
 
-  console.log('project', project);
 
   const getStatusColor = (status: Project['status']) => {
     const colors = {

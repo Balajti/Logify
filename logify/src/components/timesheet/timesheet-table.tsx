@@ -22,9 +22,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Plus, Save, Trash2 } from 'lucide-react';
 import { SubmitTimesheetDialog } from './submit-timesheet-dialog';
-import { useAppSelector } from '@/lib/redux/hooks';
-import { selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { fetchDashboardData, fetchProjects, selectAllProjects } from '@/lib/redux/features/projects/projectsSlice';
 import { selectAllTasks } from '@/lib/redux/features/tasks/tasksSlice';
+import { selectAllTeamMembers } from '@/lib/redux/features/team/teamSlice';
+import { useSession } from 'next-auth/react';
 
 export interface TimesheetEntry {
   id: number;
@@ -56,12 +58,26 @@ interface Row {
 export const TimesheetTable = ({
   startDate,
   entries,
+  employeeId,
   isAdminView = false,
 }: TimesheetTableProps) => {
+
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+    dispatch(fetchProjects());
+  }, [dispatch]);
+
   const [allRows, setAllRows] = useState<Row[]>([]);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const projects = useAppSelector(selectAllProjects) || [];
   const tasks = useAppSelector(selectAllTasks) || [];
+  const team_members = useAppSelector(selectAllTeamMembers) || [];
+  const session = useSession();
+
+  if (!employeeId) {
+    employeeId = team_members.find((member) => member.user_id === session.data?.user.id)?.id.toString();
+  }
 
   // Calculate week days
   const weekDays = Array.from({ length: 7 }, (_, i) =>
@@ -71,6 +87,8 @@ export const TimesheetTable = ({
   // Group entries by project_id and task_id
   useEffect(() => {
     const groupedRows: Record<string, Row> = {};
+
+    const employee_name = employeeId? team_members.find((member) => member.id === Number(employeeId))?.name : 'Employee';
 
     entries.forEach((entry) => {
       const key = `${entry.project_id}-${entry.task_id}`;
@@ -95,20 +113,20 @@ export const TimesheetTable = ({
         return (
           existingEntry || {
             id: 0,
-            team_member_id: entries[0]?.team_member_id || 0,
+            team_member_id: Number(employeeId),
             date: day,
             hours: 0,
             description: 'Development',
             project_id: row.project_id,
             task_id: row.task_id,
-            team_member_name: entries[0]?.team_member_name || 'Employee',
+            team_member_name: employee_name,
           }
         );
       });
       return { ...row, entries: filledEntries };
     });
 
-    setAllRows(rows);
+    setAllRows(rows.filter((row) => row.entries.some((entry) => entry.team_member_id === Number(employeeId))));
   }, [entries]);
 
   // Update a specific row
@@ -137,7 +155,7 @@ export const TimesheetTable = ({
       description: 'Development',
       entries: weekDays.map((day) => ({
         id: 0,
-        team_member_id: entries[0]?.team_member_id || 0,
+        team_member_id: Number(employeeId),
         date: day,
         hours: 0,
         description: 'Development',
@@ -170,7 +188,7 @@ export const TimesheetTable = ({
         description: entry.description,
         project_id: row.project_id,
         task_id: row.task_id,
-        project_name: projects.find((project) => project.id === row.project_id)?.name || 'Unknown Project',
+        project_name: projects.find((project) => Number(project.id) === Number(row.project_id))?.name || 'Unknown Project',
         task_title: tasks.find((task) => task.id === row.task_id)?.title || 'Unknown Task',
         team_member_name: entry.team_member_name || 'Employee',
       }))
@@ -231,11 +249,11 @@ export const TimesheetTable = ({
           if (entry.id === 0) {
             newEntries.push({
               team_member_id: entry.team_member_id,
+              project_id: row.project_id,
+              task_id: row.task_id,
               date: entry.date,
               hours: entry.hours,
               description: entry.description,
-              project_id: row.project_id,
-              task_id: row.task_id,
             });
           } else {
             updatedEntries.push({

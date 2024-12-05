@@ -36,37 +36,77 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const admin_id = searchParams.get('admin_id') || searchParams.get('userId');
-    console.log('admin_id', admin_id);
     const session = await getServerSession(authOptions);
-    console.log('session', session);
 
     if (!admin_id) {
       return NextResponse.json({ error: 'admin_id is required' }, { status: 400 });
     }
 
-    console.log('Fetching team members for user:', admin_id);
-    
     const result = await sql`
       SELECT 
-        tm.*,
-        COUNT(DISTINCT ptm.project_id) as project_count,
-        COUNT(DISTINCT ttm.task_id) as task_count
-      FROM team_members tm
-      LEFT JOIN project_team_members ptm ON tm.id = ptm.team_member_id
-      LEFT JOIN task_team_members ttm ON tm.id = ttm.team_member_id
-      WHERE tm.admin_id = ${admin_id}
-      GROUP BY 
-        tm.id,
-        tm.name,
-        tm.role,
-        tm.department,
-        tm.email,
-        tm.phone,
-        tm.avatar,
-        tm.status,
-        tm.admin_id,
-        tm.user_id
-      ORDER BY tm.name ASC
+      tm.id,
+      tm.name,
+      tm.role,
+      tm.department,
+      tm.email,
+      tm.phone,
+      tm.avatar,
+      tm.status,
+      tm.admin_id,
+      tm.user_id,
+      COUNT(DISTINCT ptm.project_id) AS project_count,
+      COUNT(DISTINCT ttm.task_id) AS task_count,
+      COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'task_id', ttm.task_id,
+            'team_member_id', ttm.team_member_id,
+            'task_title', tasks.title,
+            'task_description', tasks.description,
+            'task_status', tasks.status,
+            'task_priority', tasks.priority,
+            'task_due_date', tasks.due_date
+          )
+        ) FILTER (WHERE ttm.task_id IS NOT NULL),
+        '[]'
+      ) AS tasks,
+      COALESCE(
+        json_agg(
+          DISTINCT jsonb_build_object(
+            'project_id', ptm.project_id,
+            'project_name', projects.name,
+            'project_description', projects.description,
+            'project_status', projects.status,
+            'project_priority', projects.priority,
+            'project_start_date', projects.start_date,
+            'project_end_date', projects.end_date,
+            'project_due_date', projects.due_date,
+            'project_task_total', projects.task_total,
+            'project_task_completed', projects.task_completed,
+            'project_progress', projects.progress
+          )
+        ) FILTER (WHERE ptm.project_id IS NOT NULL),
+        '[]'
+      ) AS projects
+    FROM team_members tm
+    LEFT JOIN project_team_members ptm ON tm.id = ptm.team_member_id
+    LEFT JOIN projects ON ptm.project_id = projects.id
+    LEFT JOIN task_team_members ttm ON tm.id = ttm.team_member_id
+    LEFT JOIN tasks ON ttm.task_id = tasks.id
+    WHERE tm.admin_id = ${admin_id}
+    GROUP BY 
+      tm.id,
+      tm.name,
+      tm.role,
+      tm.department,
+      tm.email,
+      tm.phone,
+      tm.avatar,
+      tm.status,
+      tm.admin_id,
+      tm.user_id
+    ORDER BY tm.name ASC;
+
     `;
 
     return NextResponse.json(result.rows);
@@ -78,6 +118,7 @@ export async function GET(request: Request) {
     );
   }
 }
+
 
 export async function POST(request: Request) {
   try {

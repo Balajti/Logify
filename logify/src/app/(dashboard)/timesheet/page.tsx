@@ -7,10 +7,11 @@ import { TimesheetEntry, TimesheetTable } from '@/components/timesheet/timesheet
 import { AdminTimesheetView } from '@/components/timesheet/admin-timesheet-view';
 import { useAuthorization } from '@/hooks/use-authorization';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { fetchTimesheetEntries, selectAllTimesheetEntries, selectTimesheetStatus } from '@/lib/redux/features/timesheet/timesheetSlice';
+import { fetchTimesheetEntries, selectAllTimesheetEntries, selectSelectedEmployee, selectTimesheetStatus } from '@/lib/redux/features/timesheet/timesheetSlice';
 import { startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
 import { fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
 import { fetchTasks } from '@/lib/redux/features/tasks/tasksSlice';
+import { fetchProjects } from '@/lib/redux/features/projects/projectsSlice';
 
 export default function TimesheetPage() {
   const { isAdmin, userId } = useAuthorization();
@@ -33,12 +34,13 @@ export default function TimesheetPage() {
   useEffect(() => {
     dispatch(fetchTeamMembers());
     dispatch(fetchTasks());
+    dispatch(fetchProjects());
     if (isAdmin) {
       dispatch(fetchTimesheetEntries({}));
     } else {
       
       const employeeId = 1;
-      dispatch(fetchTimesheetEntries({ team_member_id: userId }));
+      dispatch(fetchTimesheetEntries({ team_member_id: Number(userId) }));
     }
   }, [dispatch, isAdmin]);
 
@@ -59,7 +61,7 @@ export default function TimesheetPage() {
               onPrevious={handlePreviousWeek}
               onNext={handleNextWeek}
             />
-            <TimesheetTable startDate={weekStart} entries={timesheetEntries} employeeId={userId} isAdminView={!isAdmin}/>
+            <TimesheetTable startDate={weekStart} entries={timesheetEntries} isAdminView={!isAdmin}/>
           </>
         )}
       </div>

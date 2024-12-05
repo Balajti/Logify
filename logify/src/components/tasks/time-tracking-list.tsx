@@ -20,7 +20,6 @@ interface TimeTrackingListProps {
 
 export function TimeTrackingList({ projectId }: TimeTrackingListProps) {
   // This would come from Redux in a real app
-  console.log(projectId);
   const timeEntries: TimeEntry[] = [
     {
       id: '1',

@@ -29,9 +29,11 @@ export interface BaseEntity {
     team: number[];
     task_total: number;
     task_completed: number;
-    tasks: number[];
+    tasks: Task[];
     team_count?: number;
     totalHours?: number;
+    timesheets?: TimesheetEntry[];
+    due_date?: string;
   }
   
   export interface Task extends BaseEntity {
