@@ -122,19 +122,6 @@ export default function LoginPage() {
           </Form>
 
           <div className="mt-6">
-            <div className="text-sm text-center text-gray-600">
-              For demo, use:{' '}
-              <span className="font-semibold">demo@logify.com</span> /{' '}
-              <span className="font-semibold">demo123</span>
-            </div>
-            <div className="text-sm text-center text-gray-600">
-              For demo, use:{' '}
-              <span className="font-semibold">employee@logify.com</span> /{' '}
-              <span className="font-semibold">demo123</span>
-            </div>
-          </div>
-
-          <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300" />
