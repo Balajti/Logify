@@ -6,6 +6,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { deleteTeamMember } from '@/lib/redux/features/team/teamSlice';
+import { useAppDispatch } from '@/lib/redux/hooks';
 import { MoreVertical } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
@@ -25,6 +27,11 @@ interface TeamListProps {
 
 export function TeamList({ teamMembers }: TeamListProps) {
   const session = useSession();
+  const dispatch = useAppDispatch();
+
+  const removeMember = (id: number) => {
+    dispatch(deleteTeamMember(id));
+  }
 
   return (
     <div className="space-y-4">
@@ -45,7 +52,7 @@ export function TeamList({ teamMembers }: TeamListProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>Remove</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => removeMember(Number(member.id))}>Remove</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

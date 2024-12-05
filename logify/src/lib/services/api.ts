@@ -91,8 +91,14 @@ export const teamApi = {
   update: (id: number, data: UpdateDTO<TeamMember>) => 
     api.patch<TeamMember>(`/team-members/${id}`, data),
     
-  delete: (id: number) => 
-    api.delete(`/team-members/${id}`),
+  async delete(id: number) {
+    const response = await fetch(`/api/team-members/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to delete team member');
+    }
+    return response.json();
+  },
 };
 
 export const timesheetApi = {
