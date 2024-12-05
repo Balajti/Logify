@@ -33,7 +33,6 @@ export function FilesList({ projectId }: FilesListProps) {
     },
     // Add more mock files...
   ];
-  console.log(projectId);
 
   return (
     <div className="space-y-4">

@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { setTaskFilters } from "@/lib/redux/features/tasks/tasksSlice";
 import type { RootState } from "@/lib/redux/store";
-import { mockProjects } from "@/lib/data/mockData";
 
 export function TaskFilters() {
   const dispatch = useAppDispatch();
@@ -32,8 +31,10 @@ export function TaskFilters() {
     dispatch(setTaskFilters({ priority: currentPriorities }));
   };
 
+  const projects = useAppSelector(state => state.projects.items);
+
   const handleProjectChange = (value: string) => {
-    const tempProj = filters.project.map((ids) => mockProjects.find((p) => p.id === ids));
+    const tempProj = filters.project.map((ids) => projects.find((p) => p.id === ids));
     const currentProjects = tempProj.some((project) => project && project.id === Number(value))
       ? filters.project.filter((p: number) => p !== Number(value))
       : [...filters.project, Number(value)];

@@ -1,25 +1,39 @@
+// @ts-nocheck
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Clock, CalendarDays, Users, CheckSquare } from 'lucide-react';
+import { Clock, CalendarDays, Users, CheckSquare, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tasks } from '@/lib/types/task';
-import { mockTasks, mockTeamMembers } from '@/lib/data/mockData';
+import {
+  selectAllProjects,
+  selectProjectById,
+  deleteProjectAsync,
+} from '@/lib/redux/features/projects/projectsSlice';
 
 export default function ProjectDetailsPage() {
   const params = useParams();
   const projectId = params.projectId as string;
   
-  const project = useAppSelector(state =>
-    state.projects.items.find(p => p.id === Number(projectId))
-  );
+  // Use typed dispatch
+  const dispatch = useAppDispatch();
+
+  const projects = useAppSelector(selectAllProjects);
+  const project = useAppSelector(state => selectProjectById(state, Number(projectId)));
+  const tasks = useAppSelector(state => state.tasks.items);
+  const teamMembers = useAppSelector(state => state.team.members);
+
+  const filteredTasks = tasks.filter(task => Number(task.projectId) !== Number(projectId));
+  const filteredTeamMembers = teamMembers.filter(member => member.projects.includes(Number(projectId)));
+  const router = useRouter();
+  const tasksFromProject = project?.tasks || []; 
 
   if (!project) {
     return <div>Project not found</div>;
@@ -34,6 +48,26 @@ export default function ProjectDetailsPage() {
     return colors[priority];
   };
 
+
+  const handleDeleteProject = (projId: number) => {
+    dispatch(deleteProjectAsync(projId));
+    
+    router.push('/projects');
+  };
+
+
+  let totalHours = 0;
+  project.timesheets?.forEach((timesheet) => {
+    totalHours += timesheet.hours;
+  });
+
+  const date = project.due_date ? new Date(project.due_date) : null;
+  const month = date ? (date.getMonth() + 1).toString().padStart(2, '0') : '';
+  const day = date ? date.getDate().toString().padStart(2, '0') : '';
+
+  const dueDate = date ? `${date.getFullYear()}-${month}-${day}` : '';
+
+
   return (
     <DashboardWrapper>
       <div className="space-y-6">
@@ -43,37 +77,40 @@ export default function ProjectDetailsPage() {
             <h1 className="text-3xl font-bold">{project.name}</h1>
             <p className="text-gray-500 mt-2">{project.description}</p>
           </div>
-          <Button>Edit Project</Button>
+          {/* Pass a function to onClick, not immediately invoke */}
+          <Button
+            variant="destructive"
+            className="flex items-center space-x-2"
+            onClick={() => handleDeleteProject(Number(projectId))}
+          >
+            <Trash2 className="h-5 w-5" />
+            <span>Remove</span>
+          </Button>
         </div>
 
         {/* Project Stats */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6 flex flex-col items-center">
               <Clock className="h-8 w-8 text-blue-500 mb-2" />
               <p className="text-sm text-gray-500">Total Hours</p>
-              <p className="text-2xl font-bold">142.5</p>
+              <p className="text-2xl font-bold">{totalHours}</p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center">
               <CheckSquare className="h-8 w-8 text-green-500 mb-2" />
               <p className="text-sm text-gray-500">Tasks</p>
-              <p className="text-2xl font-bold">{project.task.completed}/{project.task.total}</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6 flex flex-col items-center">
-              <Users className="h-8 w-8 text-purple-500 mb-2" />
-              <p className="text-sm text-gray-500">Team Members</p>
-              <p className="text-2xl font-bold">{project.team.length}</p>
+              <p className="text-2xl font-bold">
+                {project.task_completed}/{project.task_total || '0'}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardContent className="p-6 flex flex-col items-center">
               <CalendarDays className="h-8 w-8 text-yellow-500 mb-2" />
               <p className="text-sm text-gray-500">Due Date</p>
-              <p className="text-2xl font-bold">{project.dueDate}</p>
+              <p className="text-2xl font-bold">{dueDate}</p>
             </CardContent>
           </Card>
         </div>
@@ -83,7 +120,6 @@ export default function ProjectDetailsPage() {
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
@@ -130,56 +166,34 @@ export default function ProjectDetailsPage() {
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="text-lg font-semibold">Tasks</h3>
-                  <Button>Add Task</Button>
                 </div>
                 <div className="space-y-4">
-                  {project.tasks.map((taskId) => (
-                    <div key={mockTasks[taskId - 1].id} className="flex items-center justify-between p-4 border rounded-lg">
+                  {tasksFromProject.map((task) => (
+                    <div
+                      key={task.task_id}
+                      className="flex items-center justify-between p-4 border rounded-lg"
+                    >
                       <div className="flex items-center space-x-4 w-full justify-between">
                         <div>
-                          <p className="font-medium">{mockTasks[taskId - 1].title}</p>
-                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].description}</p>
+                        
+                          <p className="font-medium">{task.task_title}</p>
+                          
+                          <p className="text-sm text-gray-500">{task.task_description}</p>
                         </div>
-                        <div className='flex items-center space-x-4 flex-row'>
-                          <p className='font-medium'>Priority: </p>
-                          <Badge className={getPriorityColor(mockTasks[taskId - 1].priority)}>
-                            {mockTasks[taskId - 1].priority}
+                        <div className="flex items-center space-x-4 flex-row">
+                          <p className="font-medium">Priority: </p>
+                          
+                          <Badge className={getPriorityColor(task.task_priority)}>
+                            {task.task_priority}
                           </Badge>
                         </div>
-                        <div className='flex items-center space-x-4 flex-row'>
-                          <p className='font-medium'>Status: </p>
-                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].status}</p>
+                        <div className="flex items-center space-x-4 flex-row">
+                          <p className="font-medium">Status: </p>
+                          <p className="text-sm text-gray-500">{task.task_status}</p>
                         </div>
-                        <div className='flex items-center space-x-4 flex-row'>
-                          <p className='font-medium'>Due date: </p>
-                          <p className="text-sm text-gray-500">{mockTasks[taskId - 1].dueDate}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="team">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold">Team Members</h3>
-                  <Button>Add Member</Button>
-                </div>
-                <div className="space-y-4">
-                  {project.team.map((memberId) => (
-                    <div key={mockTeamMembers[memberId-1].id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <Avatar>
-                          <AvatarImage src={mockTeamMembers[memberId-1].avatar} />
-                          <AvatarFallback>{mockTeamMembers[memberId-1].name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium">{mockTeamMembers[memberId-1].name}</p>
-                          <p className="text-sm text-gray-500">{mockTeamMembers[memberId-1].role}</p>
+                        <div className="flex items-center space-x-4 flex-row">
+                          <p className="font-medium">Due date: </p>
+                          <p className="text-sm text-gray-500">{task.task_due_date}</p>
                         </div>
                       </div>
                     </div>

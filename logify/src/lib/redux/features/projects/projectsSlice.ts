@@ -1,76 +1,144 @@
-import { mockProjects } from '@/lib/data/mockData';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { projectsApi, tasksApi, timesheetApi, teamApi } from '@/lib/services/api';
+import type { RootState } from '@/lib/redux/store';
+import type { CreateDTO } from '@/lib/services/types';
+import type {
+  Project,
+  TimesheetEntry,
+  ProjectsState,
+  TimeDistributionData,
+} from './types';
 
-export interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: 'not-started' | 'in-progress' | 'on-hold' | 'completed' | 'undefined';
-  priority: 'low' | 'medium' | 'high';
-  startDate: string;
-  endDate: string;
-  dueDate: string;
-  progress: number;
-  team: number[];
-  task: {
-    total: number;
-    completed: number;
-  };
-  tasks: number[];
-}
+// Async Thunks
+export const fetchProjects = createAsyncThunk(
+  'projects/fetchProjects',
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+    const auth = state.auth;
 
-interface Activity {
-  id: string;
-  type: 'task' | 'project' | 'timesheet';
-  description: string;
-  timestamp: string;
-  user: {
-    name: string;
-    avatar?: string;
-  };
-}
+    if (!auth.session?.user) {
+      throw new Error('User not authenticated');
+    }
 
-interface TimeDistributionData {
-  name: string;
-  value: number;
-}
+    const response = await projectsApi.getAll({
+      admin_id: auth.admin_id || auth.session.user.id
+    });
 
-interface Stats {
-  totalHours: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  activeProjects: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  completedTasks: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-  teamMembers: {
-    value: number;
-    trend: { value: number; isPositive: boolean };
-  };
-}
+    return response.data;
+  }
+);
 
-interface ProjectsState {
-  items: Project[];
-  status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  error: string | null;
-  filters: {
-    status: string[];
-    priority: string[];
-    search: string;
-  };
-  stats: Stats;
-  timeDistribution: TimeDistributionData[];
-  activities: Activity[];
-  activeProjects: number[];
-}
+export const deleteProjectAsync = createAsyncThunk(
+  'projects/deleteProject',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      await projectsApi.delete(id);
+      return id;
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to delete project');
+    }
+  }
+);
+
+export const fetchDashboardData = createAsyncThunk(
+  'projects/fetchDashboardData',
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+    const auth = state.auth;
+
+    if (!auth.session?.user) {
+      throw new Error('User not authenticated');
+    }
+
+    const params = {
+      admin_id: auth.admin_id || auth.session.user.id
+    };
+
+    const [projectsResponse, tasksResponse, timesheetResponse, teamResponse] = await Promise.all([
+      projectsApi.getAll(params),
+      tasksApi.getAll(params),
+      timesheetApi.getAll(params),
+      teamApi.getAll(params),
+    ]);
+
+    const projects = projectsResponse.data;
+    const tasks = tasksResponse.data;
+    const timesheetEntries = timesheetResponse.data;
+    const teamMember = teamResponse.data;
+
+    const calculateTimeDistribution = (entries: TimesheetEntry[], category: string): number => {
+      return Math.round(
+        entries
+          .filter(entry => entry.description?.includes(category))
+          .reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0)
+      );
+    };
+
+    const timeDistribution: TimeDistributionData[] = [
+      { name: 'Development', value: calculateTimeDistribution(timesheetEntries, 'Development') },
+      { name: 'Meetings', value: calculateTimeDistribution(timesheetEntries, 'Meeting') },
+      { name: 'Planning', value: calculateTimeDistribution(timesheetEntries, 'Planning') },
+      { name: 'Research', value: calculateTimeDistribution(timesheetEntries, 'Research') },
+    ];
+
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+
+    const totalHoursThisMonth = timesheetEntries
+      .filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear;
+      })
+      .reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0);
+
+    return {
+      stats: {
+      totalHours: {
+        value: Math.round(totalHoursThisMonth),
+        trend: { value: 0, isPositive: true },
+      },
+      activeProjects: {
+        value: projects.filter(project => project.status === 'in-progress').length,
+        trend: { value: 0, isPositive: true },
+      },
+      completedTasks: {
+        value: tasks.filter(task => task.status === 'completed').length,
+        trend: { value: 0, isPositive: true },
+      },
+      teamMembers: {
+        value: teamMember.length,
+        trend: { value: 0, isPositive: true },
+      }
+      },
+      timeDistribution,
+      activities: [],
+      activeProjects: projects
+      .filter(project => project.status === 'in-progress')
+      .map(project => project.id),
+      overdueTasks: projects.filter(project => project.status != 'completed').length,
+    };
+  }
+);
+
+export const createProject = createAsyncThunk(
+  'projects/createProject',
+  async (projectData: CreateDTO<Project>, { rejectWithValue }) => {
+    try {
+      const response = await projectsApi.create(projectData);
+      if (!response.data) {
+        throw new Error('Failed to create project');
+      }
+      return response.data;
+    } catch (error) {
+      const err = error as Error;
+      return rejectWithValue(err.message || 'Failed to create project');
+    }
+  }
+);
 
 const initialState: ProjectsState = {
-  items: mockProjects,
+  items: [],
   status: 'idle',
   error: null,
   filters: {
@@ -78,63 +146,28 @@ const initialState: ProjectsState = {
     priority: [],
     search: '',
   },
-  stats: {
+  dashboardStats: {
     totalHours: {
-      value: 164.2,
-      trend: { value: 12, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     activeProjects: {
-      value: 12,
-      trend: { value: 2, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     completedTasks: {
-      value: 48,
-      trend: { value: 8, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
     teamMembers: {
-      value: 24,
-      trend: { value: 3, isPositive: true },
+      value: 0,
+      trend: { value: 0, isPositive: true },
     },
   },
-  timeDistribution: [
-    { name: 'Development', value: 45 },
-    { name: 'Meetings', value: 20 },
-    { name: 'Planning', value: 15 },
-    { name: 'Research', value: 20 },
-  ],
-  activities: [
-    {
-      id: '1',
-      type: 'task',
-      description: 'completed the login page design',
-      timestamp: '2 hours ago',
-      user: { name: 'John Doe' },
-    },
-    {
-      id: '2',
-      type: 'project',
-      description: 'started working on the API integration',
-      timestamp: '3 hours ago',
-      user: { name: 'Jane Smith' },
-    },
-    {
-      id: '3',
-      type: 'timesheet',
-      description: 'logged 8 hours on Project X',
-      timestamp: '5 hours ago',
-      user: { name: 'Mike Johnson' },
-    },
-    {
-      id: '4',
-      type: 'task',
-      description: 'reviewed pull request #123',
-      timestamp: 'Yesterday',
-      user: { name: 'Sarah Williams' },
-    },
-  ],
-  activeProjects: [
-    1, 2, 3
-  ],
+  timeDistribution: [],
+  activities: [],
+  activeProjects: [],
+  overdueTasks: 0,
 };
 
 const projectsSlice = createSlice({
@@ -144,22 +177,68 @@ const projectsSlice = createSlice({
     setFilters: (state, action: PayloadAction<Partial<ProjectsState['filters']>>) => {
       state.filters = { ...state.filters, ...action.payload };
     },
-    updateProjectProgress: (state, action: PayloadAction<{ projectId: number; progress: number }>) => {
-      const project = state.items.find(p => p.id === action.payload.projectId);
-      if (project) {
-        project.progress = action.payload.progress;
-      }
+    clearFilters: (state) => {
+      state.filters = initialState.filters;
     },
-    createProject: (state, action: PayloadAction<Omit<Project, 'id'>>) => {
-      const newProject: Project = {
-        ...action.payload,
-        id: state.items.length + 1,
-      };
-      state.items.push(newProject);
-      state.activeProjects.push(newProject.id);
+    updateProjectProgress: (state) => {
+      state.items.forEach((project) => {
+        const totalTasks = project.task_total || 0;
+        const completedTasks = project.task_completed || 0;
+        project.progress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
+      });
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDashboardData.fulfilled, (state, action) => {
+        state.dashboardStats = action.payload.stats;
+        state.timeDistribution = action.payload.timeDistribution;
+        state.activities = action.payload.activities;
+        state.activeProjects = action.payload.activeProjects;
+        state.overdueTasks = action.payload.overdueTasks;
+      })
+      .addCase(fetchProjects.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchProjects.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items = action.payload;
+      })
+      .addCase(fetchProjects.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message || 'Failed to fetch projects';
+      })
+      .addCase(createProject.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(createProject.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.items.push(action.payload);
+      })
+      .addCase(createProject.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message || 'Failed to create project';
+      })
+      .addCase(deleteProjectAsync.fulfilled, (state, action) => {
+        state.items = state.items.filter(project => project.id !== action.payload);
+      });
   },
 });
 
-export const { setFilters, updateProjectProgress, createProject } = projectsSlice.actions;
+export const {
+  setFilters,
+  clearFilters,
+  updateProjectProgress,
+} = projectsSlice.actions;
+
+// Selectors
+export const selectAllProjects = (state: RootState) => state.projects.items;
+export const selectProjectById = (state: RootState, projectId: number) =>
+  state.projects.items.find(project => Number(project.id) === projectId);
+export const selectDashboardStats = (state: RootState) => state.projects.dashboardStats;
+export const selectTimeDistribution = (state: RootState) => state.projects.timeDistribution;
+export const selectActivities = (state: RootState) => state.projects.activities;
+export const selectActiveProjectIds = (state: RootState) => state.projects.activeProjects;
+export const selectOverdueTasks = (state: RootState) => state.projects.overdueTasks;
+
 export default projectsSlice.reducer;

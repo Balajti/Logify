@@ -2,14 +2,35 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { fetchTasks, fetchTeamMembers, selectAllTasks, selectAllTeamMembers } from "@/lib/redux/features";
+import { fetchDashboardData, selectDashboardStats } from "@/lib/redux/features/projects/projectsSlice";
+import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
+import { use, useEffect } from "react";
 
 export function TeamPerformance() {
-  const teamMembers = [
-    { name: 'John Doe', completed: 85, total: 100 },
-    { name: 'Jane Smith', completed: 72, total: 80 },
-    { name: 'Mike Johnson', completed: 45, total: 50 },
-    { name: 'Sarah Williams', completed: 32, total: 40 },
-  ];
+
+  const dispatch = useAppDispatch();
+  useEffect(() => {
+    dispatch(fetchTeamMembers());
+  }, [dispatch]);
+
+  const team = useAppSelector(selectAllTeamMembers);
+
+
+  const teamMembers: { name: string; completed: number; total: number }[] = [];
+
+  team.forEach((member) => {
+    let completed = 0;
+
+    member.tasks.forEach((task) => {
+      // @ts-ignore
+      if (task && task.task_status === 'completed') {
+        completed += 1;
+      }
+    });
+  teamMembers.push({ name: member.name, completed, total: member.tasks.length });
+  });
+  
 
   return (
     <Card>

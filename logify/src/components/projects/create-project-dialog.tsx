@@ -1,9 +1,8 @@
 'use client';
 
-import { useForm } from "react-hook-form";
+import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -29,56 +28,99 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useAppDispatch } from '@/lib/redux/hooks';
+import { Project } from '@/lib/redux/features/projects/types';
+import { format } from 'date-fns';
+import { useRouter } from 'next/navigation';
 import { createProject } from '@/lib/redux/features/projects/projectsSlice';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/lib/redux/store';
 
-const projectSchema = z.object({
-  name: z.string().min(3, 'Project name must be at least 3 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
+const formSchema = z.object({
+  name: z.string().min(1, "Project name is required"),
+  description: z.string(),
   status: z.enum(['not-started', 'in-progress', 'on-hold', 'completed']),
   priority: z.enum(['low', 'medium', 'high']),
-  startDate: z.string(),
-  endDate: z.string(),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 });
-
-type ProjectFormValues = z.infer<typeof projectSchema>;
 
 interface CreateProjectDialogProps {
   open: boolean;
   onClose: () => void;
 }
 
+const defaultValues: Omit<Project, 'id'> = {
+  name: '',
+  description: '',
+  status: 'not-started',
+  priority: 'medium',
+  startDate: '',
+  endDate: '',
+  dueDate: '',
+  progress: 0,
+  team: [],
+  tasks: [],
+  task_completed: 0,
+  task_total: 0,
+  admin_id: '',
+};
+
 export function CreateProjectDialog({
   open,
   onClose,
 }: CreateProjectDialogProps) {
-  const dispatch = useAppDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectSchema),
+  const form = useForm({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      status: 'not-started',
-      priority: 'medium',
-      startDate: format(new Date(), 'yyyy-MM-dd'),
-      endDate: format(new Date(), 'yyyy-MM-dd'),
+      name: '',
+      description: '',
+      status: 'not-started' as const,
+      priority: 'medium' as const,
+      startDate: '',
+      endDate: '',
     },
   });
 
-  const onSubmit = (values: ProjectFormValues) => {
-    dispatch(createProject({
-        ...values,
-        progress: 0,
-        team: [],
-        task: {
-            total: 0,
-            completed: 0,
-        },
-        tasks: [],
-        dueDate: ""
-    }));
+const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+  try {
+    setIsSubmitting(true);
+    setError(null);
+
+    // Format dates consistently
+    const startDate = new Date(data.startDate);
+    const endDate = new Date(data.endDate);
+
+    await dispatch(createProject({
+      name: data.name.trim(),
+      description: data.description.trim(),
+      status: data.status,
+      priority: data.priority,
+      startDate: format(startDate, 'yyyy-MM-dd'),
+      endDate: format(endDate, 'yyyy-MM-dd'),
+      dueDate: format(endDate, 'yyyy-MM-dd'), // Use same format for consistency
+      progress: 0,
+      team: [],
+      tasks: [],
+      task_completed: 0,
+      task_total: 0,
+    })).unwrap();
+
+    router.refresh();
     onClose();
-    form.reset();
-  };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Failed to create project';
+    setError(errorMessage);
+    console.error('Failed to create project:', err);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -88,7 +130,7 @@ export function CreateProjectDialog({
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="name"
@@ -204,6 +246,9 @@ export function CreateProjectDialog({
                 )}
               />
             </div>
+            {error && (
+              <div className="text-red-500 text-sm">{error}</div>
+            )}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

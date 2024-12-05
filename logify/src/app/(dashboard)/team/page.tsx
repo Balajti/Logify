@@ -1,23 +1,41 @@
 'use client';
 
+import { useEffect } from 'react';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
-import { TeamGrid } from '@/components/team/team-grid';
+import { TeamList } from '@/components/projects/team-list';
 import { TeamFilters } from '@/components/team/team-filters';
-import { Button } from '@/components/ui/button';
-import { UserPlus } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { fetchTeamMembers, selectAllTeamMembers, selectTeamStatus } from '@/lib/redux/features/team/teamSlice';
+import { useAuthorization } from '@/hooks/use-authorization';
+import { AddMemberDialog } from '@/components/team/add-member-dialog';
 
 export default function TeamPage() {
+  const dispatch = useAppDispatch();
+  const teamMembers = useAppSelector(selectAllTeamMembers);
+  const status = useAppSelector(selectTeamStatus);
+  const { isAdmin } = useAuthorization();
+
+  const handleMemberAdded = () => {
+    dispatch(fetchTeamMembers());
+  };
+
+  useEffect(() => {
+    dispatch(fetchTeamMembers());
+  }, [dispatch]);
+
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
+
   return (
     <DashboardWrapper>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Team</h1>
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" /> Add Member
-          </Button>
+          {isAdmin && <AddMemberDialog onMemberAdded={handleMemberAdded} />}
         </div>
         <TeamFilters />
-        <TeamGrid />
+        <TeamList teamMembers={teamMembers} />
       </div>
     </DashboardWrapper>
   );

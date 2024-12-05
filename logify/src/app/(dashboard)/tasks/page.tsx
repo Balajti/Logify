@@ -1,15 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
 import { Button } from '@/components/ui/button';
 import { TaskList } from '@/components/tasks/task-list';
 import { TaskFilters } from '@/components/tasks/task-filters';
 import { EditTaskDialog } from '@/components/tasks/edit-task-dialog';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { fetchTasks, selectAllTasks, selectTasksStatus } from '@/lib/redux/features/tasks/tasksSlice';
 import { Plus } from 'lucide-react';
 
 export default function TasksPage() {
+  const dispatch = useAppDispatch();
+  const tasks = useAppSelector(selectAllTasks);
+  const status = useAppSelector(selectTasksStatus);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchTasks());
+  }, [dispatch]);
+
+  if (status === 'loading') {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DashboardWrapper>

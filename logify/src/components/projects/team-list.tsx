@@ -7,35 +7,36 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { MoreVertical } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 
 interface TeamMember {
-  id: string;
+  id: number;
   name: string;
+  email: string;
   role: string;
   avatar?: string;
+  user_id?: string;
 }
 
 interface TeamListProps {
-  team: TeamMember[];
+  teamMembers: TeamMember[];
 }
 
-export function TeamList({ team }: TeamListProps) {
+export function TeamList({ teamMembers }: TeamListProps) {
+  const session = useSession();
+
   return (
     <div className="space-y-4">
-      {team.map((member) => (
-        <div
-          key={member.id}
-          className="flex items-center justify-between p-4 border rounded-lg bg-white"
-        >
-          <div className="flex items-center space-x-4">
-            <Avatar>
-              <AvatarImage src={member.avatar} />
-              <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{member.name}</p>
-              <p className="text-sm text-gray-500">{member.role}</p>
-            </div>
+      {teamMembers.map((member) => (
+        <div key={member.id} className="flex items-center space-x-4">
+          <Avatar>
+            <AvatarImage src={member.avatar} />
+            <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <h4 className="text-sm font-medium">{ member.user_id === session.data?.user.id ? 'Me' : member.name }</h4>
+            <p className="text-sm text-gray-500">{member.email}</p>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -43,8 +44,7 @@ export function TeamList({ team }: TeamListProps) {
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Change Role</DropdownMenuItem>
+            <DropdownMenuContent align="end">
               <DropdownMenuItem>Remove</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

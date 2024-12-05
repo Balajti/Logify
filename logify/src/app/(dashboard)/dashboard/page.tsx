@@ -1,21 +1,42 @@
-// src/app/(dashboard)/dashboard/page.tsx
 'use client';
 
 import { DashboardWrapper } from '@/components/shared/layouts/dashboard-wrapper';
-import { useAppSelector } from '@/lib/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { StatsCard } from '@/components/dashboard/stats-card';
-import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { TimeDistribution } from '@/components/dashboard/time-distribution';
 import { ActiveProjects } from '@/components/dashboard/active-projects';
 import { Clock, Users, Briefcase, CheckSquare } from 'lucide-react';
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ProjectsPage from '../projects/page';
-
+import React, { useEffect } from 'react';
+import {
+  selectDashboardStats,
+  selectTimeDistribution,
+  selectActivities,
+  selectActiveProjectIds,
+  fetchDashboardData,
+  fetchProjects,
+  updateProjectProgress,
+} from '@/lib/redux/features/projects/projectsSlice';
+import { fetchTimesheetEntries, selectTimesheetSummary } from '@/lib/redux/features/timesheet/timesheetSlice';
 export default function DashboardPage() {
-  const { stats, timeDistribution, activities, activeProjects } = useAppSelector(
-    (state) => state.projects
-  );
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchDashboardData());
+    dispatch(fetchTimesheetEntries({}));
+    dispatch(fetchProjects());
+    dispatch(updateProjectProgress())
+  }, [dispatch]);
+
+  const stats = useAppSelector(selectDashboardStats);
+  const timeDistribution = useAppSelector(selectTimeDistribution);
+  const activities = useAppSelector(selectActivities);
+  const activeProjects = useAppSelector(selectActiveProjectIds);
+  const timesheetSummary = useAppSelector(selectTimesheetSummary);
+
+  if (!stats) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <DashboardWrapper>
@@ -25,44 +46,43 @@ export default function DashboardPage() {
         {/* Quick Stats */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatsCard
-            title="Total Hours"
-            value={stats.totalHours.value}
-            description="Hours tracked this month"
-            icon={Clock}
-            trend={stats.totalHours.trend}
+        title="Total Hours"
+        value={stats.totalHours.value}
+        description="Hours tracked this month"
+        icon={Clock}
+        trend={stats.totalHours.trend}
           />
           <StatsCard
-            title="Active Projects"
-            value={stats.activeProjects.value}
-            icon={Briefcase}
-            trend={stats.activeProjects.trend}
+        title="Active Projects"
+        value={stats.activeProjects.value}
+        icon={Briefcase}
+        trend={stats.activeProjects.trend}
           />
           <StatsCard
-            title="Completed Tasks"
-            value={stats.completedTasks.value}
-            description="Tasks completed this week"
-            icon={CheckSquare}
-            trend={stats.completedTasks.trend}
+        title="Completed Tasks"
+        value={stats.completedTasks.value}
+        description="Tasks completed this week"
+        icon={CheckSquare}
+        trend={stats.completedTasks.trend}
           />
           <StatsCard
-            title="Team Members"
-            value={stats.teamMembers.value}
-            icon={Users}
-            trend={stats.teamMembers.trend}
+        title="Team Members"
+        value={stats.teamMembers.value}
+        icon={Users}
+        trend={stats.teamMembers.trend}
           />
         </div>
 
-        {/* Charts and Activity */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-          <TimeDistribution data={timeDistribution} />
-          <ActiveProjects projectIds={activeProjects} />
-          <Router>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/projects/active" element={<ProjectsPage />} />
-            </Routes>
-          </Router>
-          <RecentActivity activities={activities} />
+        <div className="flex items-center space-x-6">
+          {/* Time Distribution */}
+          <div className="w-1/2">
+            <TimeDistribution data={timeDistribution} />
+          </div>
+
+          {/* Active Projects */}
+          <div className="w-1/2">
+            <ActiveProjects projectIds={activeProjects} />
+          </div>
         </div>
       </div>
     </DashboardWrapper>

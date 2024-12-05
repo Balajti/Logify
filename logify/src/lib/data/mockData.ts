@@ -1,4 +1,4 @@
-import { Project } from "../redux/features/projects/projectsSlice";
+/* import { Project } from "../redux/features/projects/projectsSlice";
 import { TeamMember } from "../redux/features/team/teamSlice";
 import { Tasks } from "../types/task";
 
@@ -315,3 +315,179 @@ export const mockTeamMembers: TeamMember[] = [
         projects: [4],
     },
 ];
+ */
+
+
+
+const mockData = 
+    [
+    {
+    "id": 1,
+    "project_id": 11,
+    "task_id": 23,
+    "entries": [
+        {
+            "team_member_id": 8,
+            "date": "2024-12-04",
+            "hours": 8,
+            "description": null,
+            "project_id": 11,
+            "task_id": 23,
+            "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+            "team_member_name": "Bela Kiss",
+            "project_name": "Develop",
+            "task_title": "Front end development"
+        },
+        {
+            "team_member_id": 8,
+            "date": "2024-12-03",
+            "hours": 8,
+            "description": "Develop",
+            "project_id": 11,
+            "task_id": 23,
+            "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+            "team_member_name": "Bela Kiss",
+            "project_name": "Develop",
+            "task_title": "Front end development"
+        },
+        {
+            "team_member_id": 8,
+            "date": "2024-12-02",
+            "hours": 6,
+            "description": "Research",
+            "project_id": 11,
+            "task_id": 23,
+            "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+            "team_member_name": "Bela Kiss",
+            "project_name": "Develop",
+            "task_title": "Front end development"
+        }
+        ]
+    },
+    {
+        "project_id": 7,
+        "task_id": 8,
+        "entries": [
+            {
+                "team_member_id": 8,
+                "date": "2024-12-04",
+                "hours": 8,
+                "description": null,
+                "project_id": 7,
+                "task_id": 8,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Develop API",
+                "task_title": "Research APIs"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-12-02",
+                "hours": 8,
+                "description": "Develop",
+                "project_id": 7,
+                "task_id": 8,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Develop API",
+                "task_title": "Research APIs"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-12-05",
+                "hours": 6,
+                "description": "Research",
+                "project_id": 7,
+                "task_id": 8,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Develop API",
+                "task_title": "Research APIs"
+            }
+            ]
+    },
+    {
+        "project_id": 8,
+        "task_id": 13,
+        "entries": [
+            {
+                "team_member_id": 8,
+                "date": "2024-12-04",
+                "hours": 8,
+                "description": null,
+                "project_id": 8,
+                "task_id": 13,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Architecture"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-11-30",
+                "hours": 8,
+                "description": "Develop",
+                "project_id": 8,
+                "task_id": 13,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Architecture"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-11-27",
+                "hours": 6,
+                "description": "Research",
+                "project_id": 8,
+                "task_id": 13,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Architecture"
+            }
+            ]
+    },
+    {
+        "project_id": 8,
+        "task_id": 16,
+        "entries": [
+            {
+                "team_member_id": 8,
+                "date": "2024-12-04",
+                "hours": 8,
+                "description": null,
+                "project_id": 11,
+                "task_id": 16,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Dashboard"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-12-06",
+                "hours": 8,
+                "description": "Develop",
+                "project_id": 11,
+                "task_id": 16,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Dashboard"
+            },
+            {
+                "team_member_id": 8,
+                "date": "2024-12-07",
+                "hours": 6,
+                "description": "Research",
+                "project_id": 11,
+                "task_id": 16,
+                "admin_id": "jj5anqhvezpwhfr56gxwax0m",
+                "team_member_name": "Bela Kiss",
+                "project_name": "Design",
+                "task_title": "Design Dashboard"
+            }
+        ]
+    },
+]
