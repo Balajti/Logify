@@ -11,7 +11,10 @@ const features = [
   'Performance monitoring',
 ];
 
+
 export default function LandingPage() {
+
+  console.log('session', process.env.NEXTAUTH_URL)
   return (
     <div className="min-h-screen">
       {/* Navigation */}
