@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/providers/theme-provider';
 import './globals.css';
 import { authOptions } from '@/lib/auth';
 import Head from 'next/head';
+import { Analytics } from "@vercel/analytics/react";
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -49,6 +50,7 @@ export default async function RootLayout({
         <meta name="twitter:image" content="/twitter-card.png" />
       </Head>
       <body className={inter.className} suppressHydrationWarning>
+      <Analytics/>
         <ThemeProvider>
           <ClientProviders session={session}>
             {children}
