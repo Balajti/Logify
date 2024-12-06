@@ -76,17 +76,6 @@ export function TaskFilters() {
             <SelectItem value="high">High Priority</SelectItem>
           </SelectContent>
         </Select>
-
-        <Select onValueChange={handleProjectChange}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by project" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="website-redesign">Website Redesign</SelectItem>
-            <SelectItem value="mobile-app">Mobile App</SelectItem>
-            <SelectItem value="api-integration">API Integration</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="flex gap-2">
