@@ -15,7 +15,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const session = await getServerSession(authOptions);
-  
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -50,7 +49,7 @@ export default async function RootLayout({
         <meta name="twitter:image" content="/twitter-card.png" />
       </Head>
       <body className={inter.className} suppressHydrationWarning>
-      <Analytics/>
+        <Analytics />
         <ThemeProvider>
           <ClientProviders session={session}>
             {children}
