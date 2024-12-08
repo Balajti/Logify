@@ -53,9 +53,11 @@ Logify is a modern, intuitive time tracking and project management solution buil
 - shadcn/ui Components
 - Chart.js / Recharts
 
-### Backend (Planned)
+### Backend
 - Node.js
 - Express.js
+- Neon
+- PostgreSQL
 
 ## Screenshots
 
@@ -90,7 +92,7 @@ npm or yarn or pnpm
 ### Installation
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/logify.git
+git clone https://github.com/balajti/logify.git
 ```
 
 2. Install dependencies
@@ -115,17 +117,6 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-```
-
-### Demo Credentials
-```
-Admin:
-- Email: demo@logify.com
-- Password: demo123
-
-Employee:
-- Email: employee@logify.com
-- Password: demo123
 ```
 
 ## Project Structure
@@ -167,4 +158,4 @@ src/
 Currently, this is a personal project and not open for contributions.
 
 ## License
-This project is private and not licensed for public use.
+Please review the changes and let me know if there are any additional updates or corrections needed.
