@@ -77,6 +77,8 @@ export const TimesheetTable = ({
 
   if (!employeeId) {
     employeeId = team_members.find((member) => member.user_id === session.data?.user.id)?.id.toString();
+    console.log('employeeeeeId: ',entries);
+    //entries.filter((entry) => entry.team_member_name === session.data.user.name);
   }
 
   // Calculate week days

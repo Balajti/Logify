@@ -27,7 +27,7 @@ export async function sendWelcomeEmail(
                     <!-- Header -->
                     <tr>
                         <td style="padding: 40px 40px 20px;">
-                        <div style="font-size: 24px; font-weight: 700; color: #8a8a8a; text-shadow: 7px 5px 8px #838383;">Logify</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #8a8a8a;">Logify</div>
                         <h1 style="margin: 0; color: hsl(220, 4%, 28%); font-size: 24px; font-weight: 600;">Welcome to Logify, ${name}! 👋</h1>
                         </td>
                     </tr>
@@ -55,7 +55,7 @@ export async function sendWelcomeEmail(
                         <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
                             <tr>
                             <td align="center" style="padding: 30px 0;">
-                                <a href="${process.env.NEXT_PUBLIC_APP_URL}/login" 
+                                <a href="${process.env.NEXTAUTH_URL}/login" 
                                 style="display: inline-block; padding: 14px 32px; background-color: hsl(43, 90%, 54%); color: hsl(220, 4%, 28%); text-decoration: none; font-weight: 600; border-radius: 6px; transition: all 0.2s;">
                                 Get Started →
                                 </a>
