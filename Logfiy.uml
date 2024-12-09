@@ -1,0 +1,57 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+actor "User" as U
+actor "Adminisztrátor" as A
+rectangle "Dashboard" {
+  U --> (View dasboard)
+  U --> (Navigate from dashboard)
+  A --> (View dashboard)
+  A --> (Navigate from dashboard)
+}
+
+rectangle "Projects" {
+  U --> (View projects)
+  U --> (Navigate from projects)
+  A --> (View projects)
+  A --> (Navigate from project)
+  U --> (Create projects)
+  A --> (Create projects)
+  A --> (Remove projects)
+}
+
+rectangle "Tasks" {
+  U --> (View)
+  U --> (Navigation)
+  A --> (View)
+  A --> (Navigation)
+  U --> (Create)
+  A --> (Create)
+  A --> (Remove)
+}
+
+rectangle "Timesheet" {
+  U --> (View timesheet)
+  U --> (Navigate from timesheet)
+  A --> (View timesheet)
+  A --> (Navigate from timesheet)
+  U --> (Create timesheet)
+}
+
+rectangle "Team" {
+  U --> (View team members)
+  U --> (Navigate from team)
+  A --> (View team members)
+  A --> (Navigate from team)
+  U --> (Add team members)
+  A --> (Add team members)
+  U --> (Filter team members be department, and by status)
+  A --> (Filter team members be department, and by status)
+  A --> (Remove team members)
+}
+
+rectangle "Analytics" {
+  U --> (View statistics)
+  A --> (View statistics)
+}
+@enduml
