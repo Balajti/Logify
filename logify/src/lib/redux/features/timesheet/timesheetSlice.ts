@@ -8,6 +8,9 @@ import type {
   CreateTimesheetEntryInput,
   UpdateTimesheetEntryInput
 } from './types';
+import { useSession } from 'next-auth/react';
+import { useAppSelector } from '../../hooks';
+import { selectAllTeamMembers } from '../team/teamSlice';
 
 const calculateTimesheetSummary = (entries: TimesheetEntry[]): TimesheetSummary => {
   const totalHours = entries.reduce((sum, entry) => sum + entry.hours, 0);

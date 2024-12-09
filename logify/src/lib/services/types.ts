@@ -12,6 +12,7 @@ export interface BaseEntity {
     description?: string;
     project_id: number;
     task_id: number;
+    team_id: number;
     team_member_name?: string;
     project_name?: string;
     task_title?: string;

@@ -10,8 +10,6 @@ import {
 } from "@/components/ui/select";
 import { TimesheetTable } from './timesheet-table';
 import { startOfWeek, addWeeks, subWeeks, endOfWeek } from 'date-fns';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
 import { selectAllTeamMembers, fetchTeamMembers } from '@/lib/redux/features/team/teamSlice';
 import { 
